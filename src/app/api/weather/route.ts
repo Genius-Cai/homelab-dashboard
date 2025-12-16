@@ -1,11 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // Open-Meteo API (free, no key needed)
 const OPEN_METEO_API = "https://api.open-meteo.com/v1/forecast";
 
-// Sydney coordinates
-const SYDNEY_LAT = -33.8688;
-const SYDNEY_LON = 151.2093;
+// Fallback: Sydney coordinates (server location)
+const DEFAULT_LAT = -33.8688;
+const DEFAULT_LON = 151.2093;
+const DEFAULT_CITY = "Sydney";
+const DEFAULT_TIMEZONE = "Australia/Sydney";
 
 // WMO Weather interpretation codes
 const weatherCodes: Record<number, { description: string; icon: string }> = {
@@ -39,6 +41,14 @@ const weatherCodes: Record<number, { description: string; icon: string }> = {
   99: { description: "Thunderstorm with heavy hail", icon: "⛈️" },
 };
 
+interface GeoLocation {
+  lat: number;
+  lon: number;
+  city: string;
+  country: string;
+  timezone: string;
+}
+
 interface WeatherData {
   temperature: number;
   apparentTemperature: number;
@@ -51,13 +61,85 @@ interface WeatherData {
   location: string;
 }
 
-export async function GET() {
+// Get client IP from various headers
+function getClientIP(request: NextRequest): string | null {
+  // Cloudflare
+  const cfConnectingIP = request.headers.get("cf-connecting-ip");
+  if (cfConnectingIP) return cfConnectingIP;
+
+  // X-Forwarded-For (may contain multiple IPs, take the first)
+  const xForwardedFor = request.headers.get("x-forwarded-for");
+  if (xForwardedFor) {
+    const ips = xForwardedFor.split(",").map((ip) => ip.trim());
+    return ips[0] || null;
+  }
+
+  // X-Real-IP
+  const xRealIP = request.headers.get("x-real-ip");
+  if (xRealIP) return xRealIP;
+
+  return null;
+}
+
+// Get location from IP using ip-api.com (free, no key needed)
+async function getLocationFromIP(ip: string): Promise<GeoLocation | null> {
   try {
+    // Skip private/local IPs
+    if (
+      ip.startsWith("192.168.") ||
+      ip.startsWith("10.") ||
+      ip.startsWith("172.") ||
+      ip === "127.0.0.1" ||
+      ip === "::1"
+    ) {
+      return null;
+    }
+
+    const response = await fetch(
+      `http://ip-api.com/json/${ip}?fields=status,city,country,lat,lon,timezone`,
+      { next: { revalidate: 3600 } } // Cache for 1 hour
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+
+    if (data.status !== "success") return null;
+
+    return {
+      lat: data.lat,
+      lon: data.lon,
+      city: data.city,
+      country: data.country,
+      timezone: data.timezone,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // Try to get client IP and geolocate
+    const clientIP = getClientIP(request);
+    let location: GeoLocation | null = null;
+
+    if (clientIP) {
+      location = await getLocationFromIP(clientIP);
+    }
+
+    // Use detected location or fallback to Sydney
+    const lat = location?.lat ?? DEFAULT_LAT;
+    const lon = location?.lon ?? DEFAULT_LON;
+    const city = location?.city ?? DEFAULT_CITY;
+    const timezone = location?.timezone ?? DEFAULT_TIMEZONE;
+
     const params = new URLSearchParams({
-      latitude: SYDNEY_LAT.toString(),
-      longitude: SYDNEY_LON.toString(),
-      current: "temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,is_day",
-      timezone: "Australia/Sydney",
+      latitude: lat.toString(),
+      longitude: lon.toString(),
+      current:
+        "temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,is_day",
+      timezone: timezone,
     });
 
     const response = await fetch(`${OPEN_METEO_API}?${params}`, {
@@ -71,7 +153,10 @@ export async function GET() {
     const data = await response.json();
     const current = data.current;
     const weatherCode = current.weather_code;
-    const weatherInfo = weatherCodes[weatherCode] || { description: "Unknown", icon: "❓" };
+    const weatherInfo = weatherCodes[weatherCode] || {
+      description: "Unknown",
+      icon: "❓",
+    };
 
     const weather: WeatherData = {
       temperature: Math.round(current.temperature_2m),
@@ -82,12 +167,13 @@ export async function GET() {
       humidity: current.relative_humidity_2m,
       windSpeed: Math.round(current.wind_speed_10m),
       isDay: current.is_day === 1,
-      location: "Sydney",
+      location: city,
     };
 
     return NextResponse.json({
       success: true,
       data: weather,
+      detectedIP: clientIP,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
