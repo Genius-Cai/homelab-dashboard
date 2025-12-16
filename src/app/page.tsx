@@ -17,6 +17,7 @@ import { ServicesCard } from "@/components/widgets/services-card";
 import { SystemOverview } from "@/components/widgets/system-overview";
 import { ThemeToggle } from "@/components/widgets/theme-toggle";
 import { MarketsCard } from "@/components/widgets/markets-card";
+import { Weather } from "@/components/widgets/weather";
 
 export default function Dashboard() {
   return (
@@ -51,6 +52,7 @@ export default function Dashboard() {
             </Badge>
           </div>
           <div className="flex items-center gap-3">
+            <Weather />
             <ThemeToggle />
             <Clock />
           </div>
