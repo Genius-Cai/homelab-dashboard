@@ -17,6 +17,7 @@ import { ServicesCard } from "@/components/widgets/services-card";
 import { SystemOverview } from "@/components/widgets/system-overview";
 import { ThemeToggle } from "@/components/widgets/theme-toggle";
 import { MarketsCard } from "@/components/widgets/markets-card";
+import { TodoList } from "@/components/widgets/todo-list";
 
 export default function Dashboard() {
   return (
@@ -132,20 +133,8 @@ export default function Dashboard() {
         {/* Markets Card - Real-time data */}
         <MarketsCard />
 
-        {/* TODO Card */}
-        <Card className="hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-sm transition-all duration-100">
-          <CardHeader>
-            <CardTitle>☐ TODO</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <TodoItem text="买菜" done={false} />
-            <TodoItem text="写代码" done={false} />
-            <TodoItem text="吃饭" done={true} />
-            <div className="mt-4 pt-2 border-t border-border/50">
-              <p className="text-xs text-muted-foreground font-mono">[3 items · 1 done]</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* TODO Card - Synced with Blinko */}
+        <TodoList />
 
         {/* DNS Defense Card */}
         <Card className="hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-sm transition-all duration-100">
@@ -248,17 +237,6 @@ function JourneyItem({
   );
 }
 
-function TodoItem({ text, done }: { text: string; done: boolean }) {
-  return (
-    <div className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent/50 p-1 -mx-1 transition-colors group">
-      <span className={`h-4 w-4 border-2 border-border flex items-center justify-center font-mono text-xs
-        ${done ? "bg-primary text-primary-foreground" : "group-hover:bg-accent"}`}>
-        {done ? "✓" : " "}
-      </span>
-      <span className={done ? "line-through text-muted-foreground" : ""}>{text}</span>
-    </div>
-  );
-}
 
 function CalendarItem({
   time,

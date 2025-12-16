@@ -20,6 +20,20 @@ services:
       # Backblaze B2 credentials
       - B2_KEY_ID=005faf16e7d5b780000000002
       - B2_APP_KEY=K005xbSFXIZRk0k2wMkrhzvYFnpxJl8
+      # Uptime Kuma (public status page, no auth needed)
+      - UPTIME_KUMA_URL=http://192.168.50.80:3003
+      # Jellyfin API
+      - JELLYFIN_URL=http://192.168.50.80:8096
+      - JELLYFIN_API_KEY=0bd6c45bb089411f97a52c4a80b79020
+      # qBittorrent API
+      - QBIT_URL=http://192.168.50.80:8080
+      - QBIT_USERNAME=admin
+      - QBIT_PASSWORD=adminadmin
+      # Blinko API
+      - BLINKO_URL=https://blinko.geniuscai.com
+      - BLINKO_API_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic3VwZXJhZG1pbiIsIm5hbWUiOiJnZW5pdXNjYWkiLCJzdWIiOiIxIiwiZXhwIjo0OTE5MjcxNzgzLCJpYXQiOjE3NjU2NzE3ODN9.1IIpVjPudJXjpwxYfK-pdACdmSL85tfNR137k6_Wnxc
+      # Ollama AI (4090 PC)
+      - OLLAMA_URL=http://192.168.50.82:11434
     dns:
       - 8.8.8.8
       - 8.8.4.4

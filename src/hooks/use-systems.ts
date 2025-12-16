@@ -17,6 +17,7 @@ interface SystemsResponse {
   success: boolean;
   data: SystemData[];
   source: string;
+  count?: number;
   timestamp: string;
 }
 

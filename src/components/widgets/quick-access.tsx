@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useActivities } from "@/hooks/use-activities";
 
 // Service configuration with local and external URLs
 interface QuickService {
@@ -60,19 +60,17 @@ function useIsLocalNetwork() {
   return isLocal;
 }
 
-// Recent activities mock data
-const recentActivities = [
-  { action: "Jellyfin", detail: "正在播放 · 绝命毒师 S5E12", time: "now" },
-  { action: "qBit", detail: "下载完成 · Ubuntu 24.04.iso", time: "5m" },
-];
-
 export function QuickAccess() {
   const totalServices = categories.reduce((acc, cat) => acc + cat.services.length, 0);
   const isLocalNetwork = useIsLocalNetwork();
+  const { activities, isLoading, isLive } = useActivities();
 
   // Get appropriate URL based on network location
   const getUrl = (service: QuickService) =>
     isLocalNetwork ?? true ? service.localUrl : service.externalUrl;
+
+  // Take the first 3 activities for display
+  const displayActivities = activities.slice(0, 3);
 
   return (
     <div className="h-full flex flex-col">
@@ -118,21 +116,46 @@ export function QuickAccess() {
 
         {/* Recent Activity - Below services */}
         <div className="mt-3 pt-2 border-t border-border/30">
-          <div className="flex gap-4">
-            {recentActivities.map((activity, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 text-xs"
-              >
-                <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse shrink-0" />
-                <span className="font-medium">{activity.action}</span>
-                <span className="text-muted-foreground">{activity.detail}</span>
-                <span className="text-[10px] text-muted-foreground/50">
-                  {activity.time}
-                </span>
-              </div>
-            ))}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] text-muted-foreground/50 font-mono">
+              ACTIVITY
+            </span>
+            <span className={`text-[10px] font-mono ${isLive ? "text-success" : "text-muted-foreground/50"}`}>
+              {isLoading ? "LOADING..." : isLive ? "● LIVE" : "○ OFFLINE"}
+            </span>
           </div>
+
+          {displayActivities.length > 0 ? (
+            <div className="space-y-1.5">
+              {displayActivities.map((activity, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    activity.status === "active" ? "bg-success animate-pulse" :
+                    activity.status === "paused" ? "bg-warning" : "bg-muted-foreground"
+                  }`} />
+                  <span>{activity.icon}</span>
+                  <span className="font-medium truncate max-w-[120px]">{activity.title}</span>
+                  {activity.subtitle && (
+                    <span className="text-muted-foreground truncate max-w-[150px]">
+                      {activity.subtitle}
+                    </span>
+                  )}
+                  {activity.progress !== undefined && activity.progress < 100 && (
+                    <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+                      {activity.progress}%
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground/50 italic">
+              {isLoading ? "Loading activities..." : "No active streams or downloads"}
+            </div>
+          )}
         </div>
       </div>
     </div>

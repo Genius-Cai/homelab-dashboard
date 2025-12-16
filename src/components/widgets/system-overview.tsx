@@ -48,9 +48,9 @@ const defaultBackups = [
 ];
 
 export function SystemOverview() {
-  const { pools: storagePools, isLoading: storageLoading } = useStorage();
-  const { backups, isLoading: backupsLoading } = useBackups();
-  const { systems, isLoading: systemsLoading } = useSystems();
+  const { pools: storagePools, isLoading: storageLoading, source: storageSource } = useStorage();
+  const { backups, isLoading: backupsLoading, source: backupsSource } = useBackups();
+  const { systems, isLoading: systemsLoading, source: systemsSource } = useSystems();
 
   // Map systems data to nodes format, fallback to defaults
   const nodes: NodeData[] = systems.length > 0
@@ -74,16 +74,25 @@ export function SystemOverview() {
   // Use real backups or defaults
   const backupData = backups.length > 0 ? backups : defaultBackups;
 
+  // Determine overall data status
+  const isLive = systemsSource === "beszel" || storageSource === "pve";
+  const isLoading = storageLoading || backupsLoading || systemsLoading;
+
   return (
     <Card className="lg:col-span-2 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-sm transition-all duration-100">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <PixelServer size={16} />
           SYSTEM OVERVIEW
-          <Badge variant="success" className="ml-auto text-[10px]">
-            <PixelStatusOnline size={8} className="mr-1" />
-            ALL SYSTEMS GO
-          </Badge>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {isLoading ? "LOADING..." : isLive ? "LIVE" : "CACHED"}
+            </span>
+            <Badge variant="success" className="text-[10px]">
+              <PixelStatusOnline size={8} className="mr-1" />
+              ALL SYSTEMS GO
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
