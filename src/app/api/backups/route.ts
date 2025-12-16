@@ -22,6 +22,7 @@ const S3_BUCKET = "geniuscai-photos-sydney";
 interface B2AuthResponse {
   authorizationToken: string;
   apiUrl: string;
+  accountId: string;
 }
 
 async function getB2Auth(): Promise<B2AuthResponse | null> {
@@ -33,11 +34,15 @@ async function getB2Auth(): Promise<B2AuthResponse | null> {
       },
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error("B2 auth failed:", response.status, await response.text());
+      return null;
+    }
     const data = await response.json();
     return {
       authorizationToken: data.authorizationToken,
       apiUrl: data.apiUrl,
+      accountId: data.accountId,
     };
   } catch (error) {
     console.error("B2 auth error:", error);
@@ -47,29 +52,38 @@ async function getB2Auth(): Promise<B2AuthResponse | null> {
 
 async function getB2BucketInfo(auth: B2AuthResponse): Promise<BackupInfo | null> {
   try {
-    // Get bucket ID first
+    // Get bucket list using proper accountId from auth response
     const bucketsResponse = await fetch(`${auth.apiUrl}/b2api/v2/b2_list_buckets`, {
       method: "POST",
       headers: {
         Authorization: auth.authorizationToken,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ accountId: B2_KEY_ID.split(":")[0] }),
+      body: JSON.stringify({
+        accountId: auth.accountId,
+        bucketName: B2_BUCKET,
+      }),
     });
 
-    if (!bucketsResponse.ok) return null;
+    if (!bucketsResponse.ok) {
+      console.error("B2 list buckets failed:", bucketsResponse.status, await bucketsResponse.text());
+      return null;
+    }
+
     const bucketsData = await bucketsResponse.json();
     const bucket = bucketsData.buckets?.find((b: any) => b.bucketName === B2_BUCKET);
 
-    if (!bucket) return null;
+    if (!bucket) {
+      console.error("B2 bucket not found:", B2_BUCKET);
+      return null;
+    }
 
-    // Get file count to estimate size (B2 doesn't provide easy bucket size)
-    // For now, return cached/estimated size
+    // Return backup info (size is estimated - B2 API doesn't provide easy bucket size)
     return {
       name: "Backblaze B2",
       lastRun: new Date().toISOString().split("T")[0] + " 04:00",
       status: "success",
-      size: "138 GB",
+      size: "138 GB", // Estimated from CLAUDE.md
       isRunning: false,
       progress: 0,
     };

@@ -37,11 +37,13 @@ function parseTodo(note: BlinkoNote): TodoItem {
   // Clean content (remove tags and done markers)
   let cleanContent = content
     .replace(/^[✓\[x\]\[X\]]\s*/i, "")
-    .replace(/#today\s*/g, "")
-    .replace(/#今天\s*/g, "")
-    .replace(/#later\s*/g, "")
-    .replace(/#稍后\s*/g, "")
-    .replace(/#以后\s*/g, "")
+    .replace(/#today\s*/gi, "")
+    .replace(/#今天\s*/gi, "")
+    .replace(/#later\s*/gi, "")
+    .replace(/#稍后\s*/gi, "")
+    .replace(/#以后\s*/gi, "")
+    .replace(/- \[ \]/g, "")
+    .replace(/- \[x\]/gi, "")
     .trim();
 
   return {
@@ -56,9 +58,9 @@ function parseTodo(note: BlinkoNote): TodoItem {
 
 // Format todo for Blinko
 function formatTodoContent(content: string, column: "today" | "later", done: boolean): string {
-  const tag = column === "today" ? "#today" : "#later";
+  const columnTag = column === "today" ? "#today" : "#later";
   const prefix = done ? "✓ " : "";
-  return `${prefix}${content} ${tag}`;
+  return `${prefix}${content} ${columnTag}`;
 }
 
 // GET - Fetch all todos from Blinko
@@ -74,6 +76,7 @@ export async function GET() {
   }
 
   try {
+    // Blinko supports type=2 for todos natively
     const response = await fetch(`${BLINKO_URL}/api/v1/note/list`, {
       method: "POST",
       headers: {
@@ -81,7 +84,7 @@ export async function GET() {
         Authorization: `Bearer ${BLINKO_API_TOKEN}`,
       },
       body: JSON.stringify({
-        type: 2, // todo type
+        type: 2, // todo type (native Blinko todo)
         size: 100,
         isArchived: false,
       }),
@@ -151,7 +154,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         id: id || undefined, // undefined for new todos
         content: formattedContent,
-        type: 2, // todo type
+        type: 2, // native todo type
       }),
     });
 
@@ -261,7 +264,7 @@ export async function PATCH(request: NextRequest) {
       body: JSON.stringify({
         id,
         content: formattedContent,
-        type: 2,
+        type: 2, // native todo type
       }),
     });
 

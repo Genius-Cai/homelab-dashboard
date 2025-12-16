@@ -135,7 +135,14 @@ export async function GET() {
       });
     }
 
-    const torrents = await fetchTorrents(sid);
+    const allTorrents = await fetchTorrents(sid);
+
+    // Filter out slow downloads (< 1 MB/s) unless they're > 90% complete
+    // This reduces clutter from stalled/slow downloads
+    const MIN_SPEED_BYTES = 1024 * 1024; // 1 MB/s
+    const torrents = allTorrents.filter((t) =>
+      t.dlspeed >= MIN_SPEED_BYTES || t.progress >= 90
+    );
 
     // Convert to activity items
     const activities: ActivityItem[] = torrents.map((t) => {
@@ -160,6 +167,8 @@ export async function GET() {
       success: true,
       data: activities,
       torrents,
+      totalTorrents: allTorrents.length,
+      filteredCount: allTorrents.length - torrents.length,
       source: "qbittorrent",
       timestamp: new Date().toISOString(),
     });

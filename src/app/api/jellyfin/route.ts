@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 // Jellyfin API configuration
-const JELLYFIN_URL = process.env.JELLYFIN_URL || "http://192.168.50.80:8096";
+// Jellyfin runs on fnOS (192.168.50.184), not Docker VM
+const JELLYFIN_URL = process.env.JELLYFIN_URL || "http://192.168.50.184:8096";
 const JELLYFIN_API_KEY = process.env.JELLYFIN_API_KEY || "0bd6c45bb089411f97a52c4a80b79020";
 
 export interface JellyfinSession {
