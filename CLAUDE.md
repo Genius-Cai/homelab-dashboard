@@ -359,22 +359,82 @@ npm run lint
 
 ---
 
+## Phase 2 完成功能 (2025-12-17)
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| Blinko Todo 集成 | ✅ | 双列布局 (Today/Later)，双向同步 |
+| Jellyfin 播放状态 | ✅ | 实时显示正在播放内容 |
+| qBittorrent 下载 | ✅ | 活动流显示下载进度，过滤慢速 |
+| Backblaze B2 备份 | ✅ | 显示云备份状态 |
+| Beszel 系统监控 | ✅ | CPU/内存/温度实时数据 |
+| 天气组件 | ✅ | Open-Meteo API 集成 |
+| 市场行情 | ✅ | 加密货币 + 股票价格 |
+
+### API 端点
+
+| 端点 | 服务 | 刷新间隔 |
+|------|------|----------|
+| `/api/blinko` | Blinko Todo | 30s |
+| `/api/jellyfin` | Jellyfin Sessions | 10s |
+| `/api/qbittorrent` | qBit Downloads | 10s |
+| `/api/backups` | B2 + S3 Status | 5min |
+| `/api/beszel` | System Metrics | 10s |
+| `/api/uptime` | Uptime Kuma | 30s |
+| `/api/weather` | Open-Meteo | 5min |
+| `/api/markets` | CoinGecko/Yahoo | 1min |
+
+### 关键修复 (2025-12-17)
+
+| 问题 | 原因 | 修复 |
+|------|------|------|
+| Todo 删除不生效 | Blinko API 端点错误 | `/note/delete` → `/note/batch-delete` |
+| Services 全部 OFFLINE | API 调用无超时导致挂起 | 添加 3 秒 AbortController 超时 |
+| Jellyfin 连接失败 | URL 指向错误 IP | `.80:8096` → `.184:8096` (fnOS) |
+| B2 备份不显示 | accountId 获取错误 | 使用 auth response 中的 accountId |
+
+---
+
 ## 待实现功能
 
 - [ ] Today's Journey 右侧像素风悉尼地图
 - [ ] Dawarich API 集成 (位置数据)
-- [ ] Uptime Kuma API 集成 (服务状态)
-- [ ] Beszel API 集成 (系统资源)
+- [x] ~~Uptime Kuma API 集成~~ ✅ 2025-12-17 (带超时 fallback)
+- [x] ~~Beszel API 集成~~ ✅ 2025-12-17
 - [ ] FreshRSS API 集成 (RSS 内容)
 - [ ] AdGuard API 集成 (DNS 统计)
 - [x] ~~暗色模式支持~~ ✅ 2025-12-16
 - [ ] 拖拽自定义布局
-- [ ] 天气组件 (Open-Meteo)
-- [ ] 股市/加密 Ticker (CoinGecko)
+- [x] ~~天气组件~~ ✅ 2025-12-17 (Open-Meteo)
+- [x] ~~股市/加密 Ticker~~ ✅ 2025-12-17 (CoinGecko)
+- [x] ~~Blinko Todo 集成~~ ✅ 2025-12-17
 
 ---
 
 ## 版本历史
+
+### v0.2.0 (2025-12-17)
+
+**新增功能:**
+- Blinko Todo 双向同步 (type=2 原生 todo)
+- 双列 Todo 布局 (Today / Later)
+- Jellyfin 实时播放状态
+- qBittorrent 下载活动流 (过滤 <1MB/s 慢速下载)
+- Backblaze B2 云备份状态
+- 天气组件 (Open-Meteo)
+- 市场行情 (BTC/ETH/SOL + 股票)
+
+**Bug 修复:**
+- 修复 Blinko 删除 API 端点 (`batch-delete`)
+- 修复 Uptime Kuma API 超时问题
+- 修复 Jellyfin URL 指向 fnOS
+- 修复 B2 accountId 获取逻辑
+
+**技术细节:**
+- SWR 数据获取 + 乐观更新
+- AbortController 超时处理
+- Docker 部署 (192.168.50.80:3080)
+- Cloudflare Tunnel 外部访问
 
 ### v0.1.0 (2025-12-16)
 
@@ -395,5 +455,5 @@ npm run lint
 
 ---
 
-*最后更新: 2025-12-16*
-*状态: Phase 1 完成，准备部署到独立 LXC*
+*最后更新: 2025-12-17*
+*状态: Phase 2 完成，已部署到 Docker VM (192.168.50.80:3080)*
