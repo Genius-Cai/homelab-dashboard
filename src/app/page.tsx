@@ -9,10 +9,6 @@ import {
   PixelCoffee,
   PixelPark,
   PixelPin,
-  PixelArrowUp,
-  PixelArrowDown,
-  PixelBitcoin,
-  PixelChart,
 } from "@/components/ui/pixel-icons";
 import { QuickAccess } from "@/components/widgets/quick-access";
 import { Clock } from "@/components/widgets/clock";
@@ -20,6 +16,7 @@ import { CalendarWidget } from "@/components/widgets/calendar-widget";
 import { ServicesCard } from "@/components/widgets/services-card";
 import { SystemOverview } from "@/components/widgets/system-overview";
 import { ThemeToggle } from "@/components/widgets/theme-toggle";
+import { MarketsCard } from "@/components/widgets/markets-card";
 
 export default function Dashboard() {
   return (
@@ -132,21 +129,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Markets Card */}
-        <Card className="hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-sm transition-all duration-100">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PixelChart size={16} />
-              MARKETS
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <TickerItem symbol="BTC" price="$104.2k" change={2.3} icon={<PixelBitcoin size={14} />} />
-            <TickerItem symbol="ETH" price="$3,891" change={-0.8} />
-            <TickerItem symbol="NVDA" price="$138.2" change={1.2} />
-            <TickerItem symbol="QQQ" price="$527.8" change={0.5} />
-          </CardContent>
-        </Card>
+        {/* Markets Card - Real-time data */}
+        <MarketsCard />
 
         {/* TODO Card */}
         <Card className="hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-sm transition-all duration-100">
@@ -260,36 +244,6 @@ function JourneyItem({
       {current && (
         <Badge variant="default" className="text-[10px]">NOW</Badge>
       )}
-    </div>
-  );
-}
-
-function TickerItem({
-  symbol,
-  price,
-  change,
-  icon,
-}: {
-  symbol: string;
-  price: string;
-  change: number;
-  icon?: React.ReactNode;
-}) {
-  const isPositive = change >= 0;
-
-  return (
-    <div className="grid grid-cols-[70px_1fr_80px] items-center text-sm font-mono group hover:bg-accent/50 p-1 -mx-1 transition-colors cursor-pointer">
-      <div className="flex items-center gap-2">
-        {icon}
-        <span className="font-bold">{symbol}</span>
-      </div>
-      <span className="tabular-nums text-right pr-4">{price}</span>
-      <div className="flex items-center gap-1 justify-end">
-        {isPositive ? <PixelArrowUp size={10} /> : <PixelArrowDown size={10} />}
-        <span className={`tabular-nums ${isPositive ? "text-success" : "text-destructive"}`}>
-          {isPositive ? "+" : ""}{change.toFixed(1)}%
-        </span>
-      </div>
     </div>
   );
 }
