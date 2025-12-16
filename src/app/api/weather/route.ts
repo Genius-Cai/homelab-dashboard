@@ -154,7 +154,9 @@ export async function GET(request: NextRequest) {
 
     console.log("Weather API URL:", url);
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    });
 
     console.log("Weather API response status:", response.status);
 
