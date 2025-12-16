@@ -201,7 +201,7 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const response = await fetch(`${BLINKO_URL}/api/v1/note/delete`, {
+    const response = await fetch(`${BLINKO_URL}/api/v1/note/batch-delete`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
