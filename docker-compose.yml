@@ -7,3 +7,7 @@ services:
       - "3080:3000"
     environment:
       - NODE_ENV=production
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
