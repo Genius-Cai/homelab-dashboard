@@ -28,6 +28,15 @@ export default function Dashboard() {
       <header className="mb-6 border-b-2 border-border pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Pixel Avatar */}
+            <div className="w-12 h-12 border-2 border-border bg-card overflow-hidden">
+              <img
+                src="/images/avatar.gif"
+                alt="Steven's Avatar"
+                className="w-full h-full object-cover"
+                style={{ imageRendering: "pixelated" }}
+              />
+            </div>
             {/* Decorative brackets */}
             <span className="text-3xl font-black text-muted-foreground/40">[</span>
             <div className="text-center">
