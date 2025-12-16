@@ -122,8 +122,7 @@ async function getLocationFromIP(ip: string): Promise<GeoLocation | null> {
       timezone: data.timezone,
     };
   } catch {
-    // IP geolocation failed, will fallback to default
-    console.log("IP geolocation failed, using default location");
+    // IP geolocation failed, will fallback to default location
     return null;
   }
 }
@@ -135,11 +134,7 @@ export async function GET(request: NextRequest) {
     let location: GeoLocation | null = null;
 
     if (clientIP) {
-      console.log("Detected client IP:", clientIP);
       location = await getLocationFromIP(clientIP);
-      if (location) {
-        console.log("Geolocated to:", location.city, location.country);
-      }
     }
 
     // Use detected location or fallback to Sydney
@@ -148,17 +143,11 @@ export async function GET(request: NextRequest) {
     const city = location?.city ?? DEFAULT_CITY;
     const timezone = location?.timezone ?? DEFAULT_TIMEZONE;
 
-    console.log("Fetching weather for:", city, lat, lon);
-
     const url = `${OPEN_METEO_API}?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m,is_day&timezone=${encodeURIComponent(timezone)}`;
-
-    console.log("Weather API URL:", url);
 
     const response = await fetch(url, {
       next: { revalidate: 300 }, // Cache for 5 minutes
     });
-
-    console.log("Weather API response status:", response.status);
 
     if (!response.ok) {
       throw new Error(`Open-Meteo API error: ${response.status}`);
