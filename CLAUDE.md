@@ -5,180 +5,357 @@
 使用 **Brutalist Neo + Pixel Art** 风格构建的自定义 Homelab Dashboard，替代 Homarr。
 
 - **项目名称**: STEVEN'S_HOMELAB
-- **技术栈**: Next.js 15 + Tailwind CSS + TypeScript
+- **技术栈**: Next.js 15 + Tailwind CSS 4 + TypeScript
 - **设计风格**: Brutalist Neo (0px border-radius, 2px borders, 4px offset shadows)
 - **开发服务器**: http://localhost:3000
+- **生产域名**: dashboard.geniuscai.com
 
 ---
 
-## 2025-12-16 修改记录
+## Phase 1 完成功能 (2025-12-16)
 
-### 1. System Overview 组件 (`src/components/widgets/system-overview.tsx`)
-
-#### 1.1 支持多个存储池
-```tsx
-// 从单个 storage 对象改为 storagePools 数组
-const storagePools = [
-  { name: "TANK", used: 14.2, total: 27.3, status: "healthy", type: "media/docker" },
-  { name: "COLD", used: 8.5, total: 14.5, status: "healthy", type: "backup/archive" },
-];
-```
-
-#### 1.2 支持多个备份目标
-```tsx
-// 从单个 backup 对象改为 backups 数组，增加运行状态
-const backups = [
-  { name: "Backblaze B2", lastRun: "2025-12-15 04:00", status: "success", size: "138 GB", isRunning: false, progress: 0 },
-  { name: "AWS S3", lastRun: "2025-12-14 02:00", status: "success", size: "892 GB", isRunning: true, progress: 67 },
-];
-```
-
-#### 1.3 备份卡片状态显示
-- **正在备份** (`isRunning: true`): 显示 "SYNCING" Badge + 进度条 + 百分比
-- **空闲状态** (`isRunning: false`): 显示 "SUCCESS" Badge + "Last: 日期" + "IDLE" 标签
-
-#### 1.4 移除冗余虚线
-- Storage Pools 和 Cloud Backups 之间不再有虚线分隔
-- 只保留 Nodes 和 Storage 之间的虚线
-
-#### 1.5 节点 Header 对齐修复
-```tsx
-// 添加固定高度确保三个节点卡片的横线对齐
-<div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50 h-6">
-```
-
-#### 1.6 进度条空白部分点阵效果
-```tsx
-// StatRow 组件添加点阵背景
-<div
-  className="absolute inset-y-0 right-0"
-  style={{
-    left: `${percentage}%`,
-    backgroundImage: `radial-gradient(circle, var(--muted-foreground) 0.5px, transparent 0.5px)`,
-    backgroundSize: "4px 4px",
-    opacity: 0.2,
-  }}
-/>
-```
-
----
-
-### 2. Quick Access 组件 (`src/components/widgets/quick-access.tsx`)
-
-#### 2.1 布局从分类垂直改为扁平水平
-```tsx
-// 之前: 按分类分组垂直排列
-// 之后: 所有服务扁平化，flex-wrap 自动换行
-<div className="flex flex-wrap gap-1.5 content-start">
-  {categories.flatMap((category) =>
-    category.services.map((service) => (
-      // 服务按钮
-    ))
-  )}
-</div>
-```
-
-#### 2.2 实时动态移到底部
-```tsx
-// 从右侧垂直区域改为底部水平排列
-<div className="mt-3 pt-2 border-t border-border/30">
-  <div className="flex gap-4">
-    {recentActivities.map((activity) => (...))}
-  </div>
-</div>
-```
-
----
-
-### 3. Services Card 组件 (`src/components/widgets/services-card.tsx`)
-
-#### 3.1 移除展开/收起功能
-```tsx
-// 删除: useState, INITIAL_SHOW, expanded 状态
-// 删除: "SHOW X MORE" 按钮
-// 删除: PixelChevronDown, PixelChevronUp 导入
-```
-
-#### 3.2 改为双列网格布局
-```tsx
-// 一次显示全部 23 个服务
-<div className="grid grid-cols-2 gap-x-4 gap-y-1">
-  {allServices.map((service) => (
-    <ServiceItem key={service.name} {...service} />
-  ))}
-</div>
-```
-
----
-
-### 4. DNS Defense 卡片 (`src/app/page.tsx`)
-
-#### 4.1 ASCII 进度条改为 CSS 全宽进度条
-```tsx
-// 之前: <ASCIIProgress value={10} size="sm" showPercentage={false} />
-// 之后: CSS 进度条 + 点阵效果
-<div className="h-3 bg-muted/30 border border-border/50 relative overflow-hidden">
-  <div className="absolute inset-y-0 left-0 bg-success" style={{ width: "10%" }} />
-  <div
-    className="absolute inset-y-0 right-0"
-    style={{
-      left: "10%",
-      backgroundImage: `radial-gradient(circle, var(--muted-foreground) 1px, transparent 1px)`,
-      backgroundSize: "6px 6px",
-      opacity: 0.15,
-    }}
-  />
-</div>
-```
-
----
-
-### 5. 顶部栏响应式布局 (`src/app/page.tsx`)
-
-#### 5.1 固定像素改为弹性单位
-```tsx
-// 之前: 固定像素，150% 缩放时不对齐
-md:grid-cols-[180px_1fr_650px]
-
-// 之后: 弹性单位，任意缩放都保持比例
-md:grid-cols-[minmax(160px,1fr)_3fr_minmax(300px,2fr)]
-```
-
----
-
-## 节点配置 (Mock Data)
-
-```tsx
-const nodes = [
-  { id: "pve-main", name: "PVE", type: "proxmox", cpu: 68, memory: 82, temp: 52, containers: 49 },
-  { id: "pve-3090", name: "3090-NODE", type: "gpu-node", cpu: 35, memory: 56, temp: 45, gpuLoad: 28 },
-  { id: "rtx4090", name: "4090-PC", type: "workstation", cpu: 23, memory: 45, temp: 38, gpuLoad: 12 },
-];
-```
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| Brutalist Neo UI | ✅ | 0px 圆角, 2px 边框, 4px 阴影 |
+| 像素风图标库 | ✅ | 自定义 SVG 像素图标 (20+) |
+| 暗色/亮色模式 | ✅ | next-themes, 像素太阳/星星切换 |
+| 像素头像动画 | ✅ | 喝咖啡 GIF 动画 |
+| 服务卡片 (23个) | ✅ | 可点击跳转外部链接 |
+| 系统概览 | ✅ | 3节点 + 2存储池 + 2云备份 |
+| 快速访问 | ✅ | 9个常用服务 |
+| 响应式布局 | ✅ | Bento Grid |
+| 日历组件 | ✅ | 小型月历 + 当日高亮 |
+| 时钟组件 | ✅ | 像素风数字时钟 |
 
 ---
 
 ## 设计规范
 
-### 颜色
-- Primary: `#5046E5` (紫色)
-- Background: `#F5F3EE` (奶油色)
-- Success: 绿色 (在线/健康状态)
-- Destructive: 红色 (离线/错误状态)
-- Warning: 橙色 (>70% 使用率)
+### Brutalist Neo 核心样式
 
-### 进度条颜色阈值
-```tsx
-if (percentage > 85) return "bg-destructive";  // 红色
-if (percentage > 70) return "bg-warning";      // 橙色
-return "bg-success";                            // 绿色
+```css
+:root {
+  /* === 边框 === */
+  --border: 2px solid;
+  --radius: 0px;           /* 所有元素强制锐角 */
+
+  /* === 阴影 (Offset 风格) === */
+  --shadow: 4px 4px 0px 0px;
+
+  /* === 字体 (等宽) === */
+  --font-sans: 'Geist Mono', 'JetBrains Mono', monospace;
+}
 ```
 
-### Brutalist 元素
-- 所有元素 `border-radius: 0`
-- 边框: `2px solid`
-- 阴影: `4px 4px 0 #000`
-- 虚线分隔: `border-dashed border-border/50`
+### OKLCH 调色板
+
+#### 亮色模式 (Light)
+```css
+:root {
+  --primary: oklch(0.5066 0.2501 271.8903);        /* 紫色 */
+  --background: oklch(0.9721 0.0158 110.5501);     /* 奶油色 */
+  --foreground: oklch(0.5066 0.2501 271.8903);     /* 紫色文字 */
+  --border: oklch(0.5066 0.2501 271.8903);         /* 紫色边框 */
+  --success: oklch(0.7 0.15 145);                  /* 绿色 */
+  --warning: oklch(0.75 0.15 85);                  /* 橙色 */
+  --destructive: oklch(0.63 0.19 23.03);           /* 红色 */
+}
+```
+
+#### 暗色模式 (Dark) - 深蓝灰色调
+```css
+.dark {
+  --background: oklch(0.18 0.035 265);             /* 深蓝灰背景 */
+  --foreground: oklch(0.92 0.01 110);              /* 浅色文字 */
+  --card: oklch(0.22 0.04 265);                    /* 卡片背景 */
+  --muted: oklch(0.25 0.04 265);                   /* 静音区域 */
+  --border: oklch(0.35 0.06 270);                  /* 边框 */
+  --primary: oklch(0.92 0.01 110);                 /* 主色 (反转) */
+}
+```
+
+### 进度条颜色阈值
+
+```tsx
+if (percentage > 85) return "bg-destructive";  // 红色 - 危险
+if (percentage > 70) return "bg-warning";      // 橙色 - 警告
+return "bg-success";                            // 绿色 - 正常
+```
+
+---
+
+## 暗色模式实现
+
+### 技术方案: next-themes
+
+```tsx
+// src/app/layout.tsx
+import { ThemeProvider } from "@/components/theme-provider";
+
+<ThemeProvider
+  attribute="class"
+  defaultTheme="light"
+  enableSystem
+  disableTransitionOnChange
+>
+  {children}
+</ThemeProvider>
+```
+
+### 主题切换组件
+
+```tsx
+// src/components/widgets/theme-toggle.tsx
+import { useTheme } from "next-themes";
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+
+  return (
+    <button onClick={() => setTheme(isDark ? "light" : "dark")}>
+      {isDark ? <PixelSun /> : <PixelStar />}
+    </button>
+  );
+}
+```
+
+### 图标设计
+
+- **亮色模式**: 像素星星 (⭐) - 多射线星芒，黄色 (#F7DD65) 填充 + 黑色轮廓
+- **暗色模式**: 像素太阳 (☀️) - 中心 + 8射线，warning 颜色
+
+---
+
+## 像素头像实现
+
+### 文件位置
+```
+public/images/avatar.gif
+```
+
+### 设计规格
+- **尺寸**: 32x32 像素
+- **动画**: 喝咖啡循环动画
+- **风格**: 像素风，黑色轮廓
+
+### 使用方式
+```tsx
+<img
+  src="/images/avatar.gif"
+  alt="Steven's Avatar"
+  style={{ imageRendering: "pixelated" }}
+/>
+```
+
+---
+
+## 像素图标库
+
+### 文件位置
+```
+src/components/ui/pixel-icons.tsx
+```
+
+### 可用图标
+
+| 图标 | 组件名 | 用途 |
+|------|--------|------|
+| 状态在线 | `PixelStatusOnline` | 服务状态 |
+| 状态离线 | `PixelStatusOffline` | 服务状态 |
+| 向上箭头 | `PixelArrowUp` | 股票涨 |
+| 向下箭头 | `PixelArrowDown` | 股票跌 |
+| 比特币 | `PixelBitcoin` | 加密货币 |
+| 图表 | `PixelChart` | 市场 |
+| 家 | `PixelHome` | 旅程位置 |
+| 咖啡 | `PixelCoffee` | 旅程位置 |
+| 公园 | `PixelPark` | 旅程位置 |
+| 定位 | `PixelPin` | 当前位置 |
+| 播放/暂停 | `PixelPlay/Pause` | 媒体控制 |
+| 展开/收起 | `PixelChevron*` | UI 交互 |
+
+---
+
+## 组件架构
+
+### 页面布局 (`src/app/page.tsx`)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  HEADER: Avatar + Title + Badge + ThemeToggle + Clock           │
+├─────────────────────────────────────────────────────────────────┤
+│  TOP BAR: Calendar | Quick Access | RSS Feed                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  BENTO GRID (3 columns):                                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ Services     │  │ System       │  │ Today's Journey      │  │
+│  │ (23 items)   │  │ Overview     │  │ (timeline)           │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ Markets      │  │ TODO         │  │ DNS Defense          │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐                            │
+│  │ Calendar     │  │ (reserved)   │                            │
+│  └──────────────┘  └──────────────┘                            │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  FOOTER: Version + Uptime                                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 组件清单
+
+| 组件 | 文件 | 功能 |
+|------|------|------|
+| ThemeToggle | `widgets/theme-toggle.tsx` | 暗色/亮色切换 |
+| Clock | `widgets/clock.tsx` | 实时时钟 |
+| CalendarWidget | `widgets/calendar-widget.tsx` | 小型月历 |
+| QuickAccess | `widgets/quick-access.tsx` | 快速访问栏 |
+| ServicesCard | `widgets/services-card.tsx` | 23个服务状态 |
+| SystemOverview | `widgets/system-overview.tsx` | 节点/存储/备份 |
+
+---
+
+## 后端架构规划 (Phase 2)
+
+### BFF (Backend for Frontend) 模式
+
+使用 Next.js API Routes 作为 BFF 层，代理各内部服务 API：
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Dashboard     │────▶│  Next.js API    │────▶│  Homelab APIs   │
+│   (React)       │     │  Routes (BFF)   │     │  (Internal)     │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                              │
+                              ├── /api/uptime     → Uptime Kuma
+                              ├── /api/beszel     → Beszel
+                              ├── /api/dawarich   → Dawarich
+                              ├── /api/adguard    → AdGuard Home
+                              ├── /api/freshrss   → FreshRSS
+                              ├── /api/weather    → Open-Meteo
+                              ├── /api/markets    → CoinGecko/Yahoo
+                              └── /api/calendar   → Google Calendar
+```
+
+### API 集成优先级
+
+| 优先级 | API | 功能 | 难度 |
+|--------|-----|------|------|
+| P0 | Uptime Kuma | 服务状态实时监控 | 简单 |
+| P0 | Open-Meteo | 天气数据 | 简单 |
+| P1 | Beszel | 系统资源监控 | 中等 |
+| P1 | AdGuard Home | DNS 统计 | 简单 |
+| P1 | CoinGecko | 加密货币价格 | 简单 |
+| P2 | Dawarich | 位置追踪/旅程 | 中等 |
+| P2 | FreshRSS | RSS 内容 | 中等 |
+| P2 | Google Calendar | 日历事件 | 复杂 (OAuth) |
+
+### 数据刷新策略 (React Query)
+
+```tsx
+// 服务状态 - 30秒刷新
+useQuery({ queryKey: ['services'], refetchInterval: 30000 })
+
+// 系统资源 - 10秒刷新
+useQuery({ queryKey: ['system'], refetchInterval: 10000 })
+
+// 天气 - 5分钟刷新
+useQuery({ queryKey: ['weather'], refetchInterval: 300000 })
+
+// 股市 - 1分钟刷新 (交易时间)
+useQuery({ queryKey: ['markets'], refetchInterval: 60000 })
+```
+
+---
+
+## 部署方案
+
+### 部署策略: 独立 LXC
+
+**核心理念**: 监控系统不应该和被监控的系统放在一起
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    PVE Node 1 (.200)                    │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐    ┌─────────────────┐            │
+│  │ Docker VM (.80) │    │ Monitor LXC     │            │
+│  │ (49 containers) │    │ (.85)           │            │
+│  │                 │    │                 │            │
+│  │ ● Jellyfin      │    │ ● Dashboard     │            │
+│  │ ● Sonarr/Radarr │    │ ● (Uptime Kuma) │            │
+│  │ ● n8n           │    │                 │            │
+│  └─────────────────┘    └─────────────────┘            │
+│          │                      │                      │
+│          └──────────┬───────────┘                      │
+│                     ▼                                  │
+│          Cloudflare Tunnel                            │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 目标配置
+
+| 项目 | 值 |
+|------|-----|
+| **LXC ID** | 104 (Monitor) |
+| **IP** | 192.168.50.85 |
+| **资源** | 2 vCPU / 2GB RAM / 20GB |
+| **系统** | Debian 12 |
+| **端口** | 3000 (Dashboard) |
+| **域名** | dashboard.geniuscai.com |
+
+### 部署命令
+
+```bash
+# 1. 创建 LXC (PVE)
+pct create 104 local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst \
+  --hostname monitor \
+  --memory 2048 \
+  --cores 2 \
+  --rootfs local-lvm:20 \
+  --net0 name=eth0,bridge=vmbr0,ip=192.168.50.85/24,gw=192.168.50.1 \
+  --unprivileged 1 \
+  --features nesting=1
+
+# 2. 安装 Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs git
+
+# 3. 部署 Dashboard
+git clone https://github.com/Genius-Cai/homelab-dashboard.git /opt/dashboard
+cd /opt/dashboard
+npm ci && npm run build
+
+# 4. PM2 进程管理
+npm install -g pm2
+pm2 start npm --name "dashboard" -- start
+pm2 save && pm2 startup
+```
+
+---
+
+## 开发命令
+
+```bash
+# 开发服务器
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 启动生产服务器
+npm start
+
+# 类型检查
+npm run type-check
+
+# 代码检查
+npm run lint
+```
 
 ---
 
@@ -190,24 +367,33 @@ return "bg-success";                            // 绿色
 - [ ] Beszel API 集成 (系统资源)
 - [ ] FreshRSS API 集成 (RSS 内容)
 - [ ] AdGuard API 集成 (DNS 统计)
-- [ ] 暗色模式支持
+- [x] ~~暗色模式支持~~ ✅ 2025-12-16
 - [ ] 拖拽自定义布局
+- [ ] 天气组件 (Open-Meteo)
+- [ ] 股市/加密 Ticker (CoinGecko)
 
 ---
 
-## 快速命令
+## 版本历史
 
-```bash
-# 开发服务器
-npm run dev
+### v0.1.0 (2025-12-16)
 
-# 构建
-npm run build
+**新增功能:**
+- Brutalist Neo + Pixel Art 设计系统
+- 23 个服务快速访问
+- 系统概览 (3节点 + 2存储池 + 2云备份)
+- 暗色/亮色模式切换
+- 像素风头像动画
+- 自定义像素星星图标
+- 响应式 Bento Grid 布局
 
-# 类型检查
-npm run type-check
-```
+**技术细节:**
+- Next.js 15 App Router
+- Tailwind CSS 4 + OKLCH 颜色
+- next-themes 主题管理
+- TypeScript 严格模式
 
 ---
 
 *最后更新: 2025-12-16*
+*状态: Phase 1 完成，准备部署到独立 LXC*
