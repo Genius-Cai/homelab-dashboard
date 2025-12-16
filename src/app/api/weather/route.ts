@@ -95,10 +95,19 @@ async function getLocationFromIP(ip: string): Promise<GeoLocation | null> {
       return null;
     }
 
+    // Use AbortController for timeout (3 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
     const response = await fetch(
       `http://ip-api.com/json/${ip}?fields=status,city,country,lat,lon,timezone`,
-      { next: { revalidate: 3600 } } // Cache for 1 hour
+      {
+        cache: "no-store",
+        signal: controller.signal,
+      }
     );
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) return null;
 
@@ -114,6 +123,7 @@ async function getLocationFromIP(ip: string): Promise<GeoLocation | null> {
       timezone: data.timezone,
     };
   } catch {
+    // IP geolocation failed, will fallback to default
     return null;
   }
 }
@@ -142,9 +152,16 @@ export async function GET(request: NextRequest) {
       timezone: timezone,
     });
 
+    // Add timeout for weather API
+    const weatherController = new AbortController();
+    const weatherTimeout = setTimeout(() => weatherController.abort(), 5000);
+
     const response = await fetch(`${OPEN_METEO_API}?${params}`, {
-      next: { revalidate: 300 }, // Cache for 5 minutes
+      next: { revalidate: 300 },
+      signal: weatherController.signal,
     });
+
+    clearTimeout(weatherTimeout);
 
     if (!response.ok) {
       throw new Error(`Open-Meteo API error: ${response.status}`);
