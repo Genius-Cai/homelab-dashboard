@@ -19,6 +19,7 @@ import { Clock } from "@/components/widgets/clock";
 import { CalendarWidget } from "@/components/widgets/calendar-widget";
 import { ServicesCard } from "@/components/widgets/services-card";
 import { SystemOverview } from "@/components/widgets/system-overview";
+import { ThemeToggle } from "@/components/widgets/theme-toggle";
 
 export default function Dashboard() {
   return (
@@ -43,7 +44,10 @@ export default function Dashboard() {
               ONLINE
             </Badge>
           </div>
-          <Clock />
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Clock />
+          </div>
         </div>
 
       </header>
