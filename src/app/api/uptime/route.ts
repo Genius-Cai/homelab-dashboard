@@ -59,6 +59,10 @@ function normalizeServiceName(name: string): string {
 
 async function fetchUptimeKumaStatus(): Promise<Monitor[]> {
   try {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
     // Uptime Kuma public status page API
     const response = await fetch(
       `${UPTIME_KUMA_URL}/api/status-page/${STATUS_PAGE_SLUG}`,
@@ -67,8 +71,10 @@ async function fetchUptimeKumaStatus(): Promise<Monitor[]> {
           "Accept": "application/json",
         },
         cache: "no-store",
+        signal: controller.signal,
       }
     );
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.error(`Uptime Kuma API error: ${response.status}`);
@@ -107,6 +113,10 @@ async function fetchUptimeKumaStatus(): Promise<Monitor[]> {
 // Alternative: Try the heartbeat API if status page doesn't work
 async function fetchUptimeKumaHeartbeat(): Promise<Monitor[]> {
   try {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
     // Try to get data from the metrics endpoint (if enabled)
     const response = await fetch(
       `${UPTIME_KUMA_URL}/metrics`,
@@ -115,8 +125,10 @@ async function fetchUptimeKumaHeartbeat(): Promise<Monitor[]> {
           "Accept": "text/plain",
         },
         cache: "no-store",
+        signal: controller.signal,
       }
     );
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       return [];
