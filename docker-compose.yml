@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  homelab-dashboard:
+    build: .
+    container_name: homelab-dashboard
+    restart: unless-stopped
+    ports:
+      - "3080:3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true
