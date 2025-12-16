@@ -11,8 +11,14 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HOMELAB",
-  description: "Personal Homelab Dashboard - Brutalist Neo",
+  title: "STEVEN'S HOMELAB",
+  description: "Personal Homelab Dashboard - Brutalist Neo + Pixel Art",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.svg",
+  },
 };
 
 export default function RootLayout({
