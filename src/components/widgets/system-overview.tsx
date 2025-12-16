@@ -211,21 +211,33 @@ export function SystemOverview() {
 }
 
 function NodeCard({ node }: { node: typeof nodes[0] }) {
+  // Badge based on node type
+  const getBadge = () => {
+    if (node.type === "proxmox") return { label: "HOST", variant: "default" as const };
+    if (node.type === "gpu-node" || node.type === "workstation") return { label: "GPU", variant: "outline" as const };
+    return null;
+  };
+  const badge = getBadge();
+
   return (
     <div className="border-2 border-border p-3 bg-card hover:bg-accent/30 transition-colors">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50 h-6">
         <PixelStatusOnline size={8} />
         <span className="text-xs font-black tracking-wider">{node.name}</span>
+        {/* Spacer to push items to right */}
+        <div className="flex-1" />
+        {/* Docker container count */}
         {node.containers && (
-          <div className="ml-auto flex items-center gap-1">
+          <div className="flex items-center gap-1">
             <PixelDocker size={10} />
-            <span className="text-[10px] font-mono">{node.containers}</span>
+            <span className="text-[10px] font-mono font-bold">{node.containers}</span>
           </div>
         )}
-        {"gpuLoad" in node && (
-          <Badge variant="outline" className="ml-auto text-[10px] px-1">
-            GPU
+        {/* Node type badge */}
+        {badge && (
+          <Badge variant={badge.variant} className="text-[10px] px-1.5">
+            {badge.label}
           </Badge>
         )}
       </div>
