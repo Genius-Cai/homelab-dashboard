@@ -9,82 +9,71 @@ import {
   PixelDisk,
   PixelServer,
   PixelStatusOnline,
+  PixelStatusOffline,
   PixelDocker,
   PixelCloud,
 } from "@/components/ui/pixel-icons";
+import { useStorage } from "@/hooks/use-storage";
+import { useBackups } from "@/hooks/use-backups";
+import { useSystems } from "@/hooks/use-systems";
 
-// Mock data - will come from Beszel API later
-const nodes = [
-  {
-    id: "pve-main",
-    name: "PVE",
-    type: "proxmox",
-    status: "online" as const,
-    cpu: 68,
-    memory: 82,
-    temp: 52,
-    containers: 49,
-    gpuLoad: 15,  // Intel Iris Xe 核显
-  },
-  {
-    id: "pve-3090",
-    name: "3090-NODE",
-    type: "gpu-node",
-    status: "online" as const,
-    cpu: 35,
-    memory: 56,
-    temp: 45,
-    gpuLoad: 28,
-  },
-  {
-    id: "rtx4090",
-    name: "4090-PC",
-    type: "workstation",
-    status: "online" as const,
-    cpu: 23,
-    memory: 45,
-    temp: 38,
-    gpuLoad: 12,
-  },
+// Node type definition
+interface NodeData {
+  id: string;
+  name: string;
+  type: "proxmox" | "nas" | "workstation" | "gpu-node";
+  status: "online" | "offline";
+  cpu: number;
+  memory: number;
+  temp: number | null;
+  containers?: number;
+  gpuLoad?: number | null;
+}
+
+// Fallback mock data
+const defaultNodes: NodeData[] = [
+  { id: "pve-main", name: "PVE", type: "proxmox", status: "online", cpu: 4, memory: 69, temp: 54, containers: 89 },
+  { id: "fnos", name: "fnOS", type: "nas", status: "online", cpu: 1, memory: 25, temp: null, gpuLoad: 0 },
+  { id: "rtx4090", name: "4090-PC", type: "workstation", status: "online", cpu: 0, memory: 40, temp: null, gpuLoad: 0 },
 ];
 
-const storagePools = [
-  {
-    name: "TANK",
-    used: 14.2,
-    total: 27.3,
-    status: "healthy" as const,
-    type: "media/docker",
-  },
-  {
-    name: "COLD",
-    used: 8.5,
-    total: 14.5,
-    status: "healthy" as const,
-    type: "backup/archive",
-  },
+const defaultPools = [
+  { name: "TANK", used: 4.48, total: 27.28, status: "healthy" as const, type: "media/docker" },
+  { name: "COLD", used: 3.81, total: 14.55, status: "healthy" as const, type: "backup/archive" },
 ];
 
-const backups = [
-  {
-    name: "Backblaze B2",
-    lastRun: "2025-12-15 04:00",
-    status: "success" as const,
-    size: "138 GB",
-    isRunning: false,
-    progress: 0,
-  },
-  {
-    name: "AWS S3",
-    lastRun: "2025-12-14 02:00",
-    status: "success" as const,
-    size: "892 GB",
-    isRunning: true,  // 模拟正在备份
-    progress: 67,
-  },
+const defaultBackups = [
+  { name: "Backblaze B2", lastRun: "2025-12-16 04:00", status: "success" as const, size: "138 GB", isRunning: false, progress: 0 },
+  { name: "AWS S3", lastRun: "2025-12-15 02:00", status: "success" as const, size: "892 GB", isRunning: false, progress: 0 },
 ];
 
 export function SystemOverview() {
+  const { pools: storagePools, isLoading: storageLoading } = useStorage();
+  const { backups, isLoading: backupsLoading } = useBackups();
+  const { systems, isLoading: systemsLoading } = useSystems();
+
+  // Map systems data to nodes format, fallback to defaults
+  const nodes: NodeData[] = systems.length > 0
+    ? systems.map(sys => ({
+        id: sys.id,
+        name: sys.name,
+        type: sys.id === "pve-main" ? "proxmox" as const :
+              sys.id === "fnos" ? "nas" as const : "workstation" as const,
+        status: sys.status,
+        cpu: sys.cpu,
+        memory: sys.memory,
+        temp: sys.temp,
+        containers: sys.id === "pve-main" ? 89 : undefined,
+        gpuLoad: sys.gpuLoad,
+      }))
+    : defaultNodes;
+
+  // Use real pools or defaults
+  const pools = storagePools.length > 0 ? storagePools : defaultPools;
+
+  // Use real backups or defaults
+  const backupData = backups.length > 0 ? backups : defaultBackups;
+
   return (
     <Card className="lg:col-span-2 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-sm transition-all duration-100">
       <CardHeader className="pb-3">
@@ -107,7 +96,7 @@ export function SystemOverview() {
 
         {/* Storage Pools Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t-2 border-dashed border-border/50">
-          {storagePools.map((pool) => (
+          {pools.map((pool) => (
             <div key={pool.name} className="border-2 border-border p-3 bg-muted/10">
               <div className="flex items-center gap-2 mb-2">
                 <PixelDisk size={14} />
@@ -145,7 +134,7 @@ export function SystemOverview() {
 
         {/* Cloud Backups Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
-          {backups.map((backup) => (
+          {backupData.map((backup) => (
             <div key={backup.name} className="border-2 border-border p-3 bg-muted/10 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
                 <PixelCloud size={14} />
@@ -210,10 +199,11 @@ export function SystemOverview() {
   );
 }
 
-function NodeCard({ node }: { node: typeof nodes[0] }) {
+function NodeCard({ node }: { node: NodeData }) {
   // Badge based on node type
   const getBadge = () => {
     if (node.type === "proxmox") return { label: "HOST", variant: "default" as const };
+    if (node.type === "nas") return { label: "NAS", variant: "outline" as const };
     if (node.type === "gpu-node" || node.type === "workstation") return { label: "GPU", variant: "outline" as const };
     return null;
   };
@@ -264,10 +254,29 @@ function StatRow({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: number;
+  value: number | null;
   unit?: string;
   max?: number;
 }) {
+  // Handle null values
+  if (value === null) {
+    return (
+      <div className="flex items-center gap-2 text-[10px] font-mono">
+        {icon}
+        <span className="w-7 text-muted-foreground shrink-0">{label}</span>
+        <div className="flex-1 h-2.5 bg-muted/30 border border-border/50 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: `radial-gradient(circle, var(--muted-foreground) 0.5px, transparent 0.5px)`,
+              backgroundSize: "4px 4px",
+            }}
+          />
+        </div>
+        <span className="w-9 text-right tabular-nums shrink-0 text-muted-foreground">--{unit}</span>
+      </div>
+    );
+  }
+
   const percentage = (value / max) * 100;
   const getBgClass = () => {
     if (percentage > 85) return "bg-destructive";

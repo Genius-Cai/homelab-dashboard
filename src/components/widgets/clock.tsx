@@ -66,19 +66,20 @@ export function Clock() {
   // Prevent hydration mismatch
   if (!mounted) {
     return (
-      <div className="flex items-center gap-4 text-sm font-mono">
-        <span className="text-muted-foreground/50">[</span>
-        <span>--:--:--</span>
-        <span className="text-muted-foreground/50">]</span>
-        <span>Sydney --°C</span>
+      <div className="flex items-center gap-3 text-sm font-mono">
+        <div className="flex items-center border-2 border-border px-3 py-1 bg-muted/30">
+          <span>--:--:--</span>
+        </div>
+        <span className="text-muted-foreground">Sydney</span>
+        <span>--°C</span>
       </div>
     );
   }
 
   return (
     <div className="flex items-center gap-3 text-sm font-mono">
-      {/* Time with decorative brackets */}
-      <div className="flex items-center gap-1 border-2 border-border px-3 py-1 bg-muted/30">
+      {/* Time */}
+      <div className="flex items-center border-2 border-border px-3 py-1 bg-muted/30">
         <span className="font-bold tabular-nums tracking-wider">{time}</span>
       </div>
 

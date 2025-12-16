@@ -8,6 +8,18 @@ services:
     environment:
       - NODE_ENV=production
       - NODE_OPTIONS=--dns-result-order=ipv4first
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      # Beszel API credentials
+      - BESZEL_URL=http://192.168.50.80:8090
+      - BESZEL_EMAIL=admin@geniuscai.com
+      - BESZEL_PASSWORD=Shangzhensteven2024!
+      # PVE API credentials
+      - PVE_HOST=192.168.50.200
+      - PVE_USER=root@pam
+      - PVE_PASSWORD=Shangzhensteven2024!
+      # Backblaze B2 credentials
+      - B2_KEY_ID=005faf16e7d5b780000000002
+      - B2_APP_KEY=K005xbSFXIZRk0k2wMkrhzvYFnpxJl8
     dns:
       - 8.8.8.8
       - 8.8.4.4

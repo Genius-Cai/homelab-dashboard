@@ -1,35 +1,64 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-// Service categories
-const categories = [
+// Service configuration with local and external URLs
+interface QuickService {
+  name: string;
+  localUrl: string;
+  externalUrl: string;
+  icon: string;
+  hot?: boolean;
+}
+
+// Service categories with dual URLs
+const categories: { name: string; services: QuickService[] }[] = [
   {
     name: "常用",
     services: [
-      { name: "Blinko", url: "http://192.168.50.80:1111", icon: "📝", hot: true },
-      { name: "MT Photos", url: "http://192.168.50.184:8063", icon: "📷" },
-      { name: "Open WebUI", url: "http://192.168.50.80:8085", icon: "🤖", hot: true },
+      { name: "Blinko", localUrl: "http://blinko.home.local", externalUrl: "https://blinko.geniuscai.com", icon: "📝", hot: true },
+      { name: "MT Photos", localUrl: "http://photos.home.local", externalUrl: "https://photos.geniuscai.com", icon: "📷" },
+      { name: "Open WebUI", localUrl: "http://chat.home.local", externalUrl: "https://chat.geniuscai.com", icon: "🤖", hot: true },
     ],
   },
   {
     name: "媒体",
     services: [
-      { name: "Jellyseerr", url: "http://jellyseerr.home.local", icon: "🎬" },
-      { name: "Jellyfin", url: "http://jellyfin.home.local", icon: "📺" },
-      { name: "qBit", url: "http://qbit.home.local", icon: "⬇️" },
+      { name: "Jellyseerr", localUrl: "http://jellyseerr.home.local", externalUrl: "https://jellyseerr.geniuscai.com", icon: "🎬" },
+      { name: "Jellyfin", localUrl: "http://jellyfin.home.local", externalUrl: "https://jellyfin.geniuscai.com", icon: "📺" },
+      { name: "qBit", localUrl: "http://qbit.home.local", externalUrl: "https://qbit.geniuscai.com", icon: "⬇️" },
     ],
   },
   {
     name: "开发",
     services: [
-      { name: "Forgejo", url: "http://192.168.50.100:3030", icon: "💻" },
-      { name: "n8n", url: "http://n8n.home.local", icon: "⚡" },
-      { name: "Portainer", url: "http://portainer.home.local", icon: "🐳" },
+      { name: "Forgejo", localUrl: "http://gitea.home.local", externalUrl: "https://gitea.geniuscai.com", icon: "💻" },
+      { name: "n8n", localUrl: "http://n8n.home.local", externalUrl: "https://n8n.geniuscai.com", icon: "⚡" },
+      { name: "Portainer", localUrl: "http://portainer.home.local", externalUrl: "https://portainer.geniuscai.com", icon: "🐳" },
     ],
   },
 ];
+
+// Hook to detect if we're on local network
+function useIsLocalNetwork() {
+  const [isLocal, setIsLocal] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+
+    if (hostname.includes("home.local") || hostname.includes("192.168.") || hostname === "localhost") {
+      setIsLocal(true);
+    } else if (hostname.includes("geniuscai.com")) {
+      setIsLocal(false);
+    } else {
+      setIsLocal(true); // Default to local for development
+    }
+  }, []);
+
+  return isLocal;
+}
 
 // Recent activities mock data
 const recentActivities = [
@@ -39,6 +68,11 @@ const recentActivities = [
 
 export function QuickAccess() {
   const totalServices = categories.reduce((acc, cat) => acc + cat.services.length, 0);
+  const isLocalNetwork = useIsLocalNetwork();
+
+  // Get appropriate URL based on network location
+  const getUrl = (service: QuickService) =>
+    isLocalNetwork ?? true ? service.localUrl : service.externalUrl;
 
   return (
     <div className="h-full flex flex-col">
@@ -60,10 +94,11 @@ export function QuickAccess() {
             category.services.map((service) => (
               <a
                 key={service.name}
-                href={service.url}
+                href={getUrl(service)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group"
+                title={getUrl(service)}
               >
                 <Button
                   variant="outline"
