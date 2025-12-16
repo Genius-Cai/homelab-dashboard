@@ -272,13 +272,13 @@ function StatRow({
     <div className="flex items-center gap-2 text-[10px] font-mono">
       {icon}
       <span className="w-7 text-muted-foreground shrink-0">{label}</span>
-      {/* CSS-based progress bar that fills available width */}
+      {/* Simple progress bar with vertical stripes */}
       <div className="flex-1 h-2.5 bg-muted/30 border border-border/50 relative overflow-hidden">
         <div
           className={`absolute inset-y-0 left-0 ${getBgClass()}`}
           style={{ width: `${percentage}%` }}
         />
-        {/* Pixel grid overlay on filled portion */}
+        {/* Vertical stripes overlay */}
         <div
           className="absolute inset-y-0 left-0 opacity-20"
           style={{

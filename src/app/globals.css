@@ -241,3 +241,16 @@
     @apply bg-primary text-primary-foreground;
   }
 }
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes stripe-slide {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 0;
+  }
+}

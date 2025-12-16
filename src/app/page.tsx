@@ -26,19 +26,19 @@ export default function Dashboard() {
       {/* Header with decorations */}
       <header className="mb-6 border-b-2 border-border pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* Decorative brackets */}
-            <span className="text-2xl font-bold text-muted-foreground/50">[</span>
-            <div>
+            <span className="text-3xl font-black text-muted-foreground/40">[</span>
+            <div className="text-center">
               <h1 className="text-2xl font-black tracking-tight">
                 STEVEN&apos;S_HOMELAB
               </h1>
-              <p className="text-xs text-muted-foreground font-mono">
+              <p className="text-[10px] text-muted-foreground/70 font-mono tracking-wider">
                 // SYSTEM STATUS: NOMINAL
               </p>
             </div>
-            <span className="text-2xl font-bold text-muted-foreground/50">]</span>
-            <Badge variant="success" className="animate-pulse">
+            <span className="text-3xl font-black text-muted-foreground/40">]</span>
+            <Badge variant="success" className="animate-pulse ml-2">
               <PixelStatusOnline size={8} className="mr-1" />
               ONLINE
             </Badge>
