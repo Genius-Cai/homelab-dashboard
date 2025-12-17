@@ -188,7 +188,7 @@ const mockMonitors: Monitor[] = [
   { id: 2, name: "Sonarr", status: true, uptime: 99.8, responseTime: 32 },
   { id: 3, name: "Radarr", status: true, uptime: 99.9, responseTime: 28 },
   { id: 4, name: "Ollama", status: true, uptime: 98.5, responseTime: 120 },
-  { id: 5, name: "ComfyUI", status: false, uptime: 0, responseTime: 0 },
+  { id: 5, name: "ComfyUI", status: true, uptime: 99.5, responseTime: 150 },
   { id: 6, name: "n8n", status: true, uptime: 99.9, responseTime: 35 },
   { id: 7, name: "Portainer", status: true, uptime: 100, responseTime: 22 },
   { id: 8, name: "AdGuard", status: true, uptime: 100, responseTime: 15 },
