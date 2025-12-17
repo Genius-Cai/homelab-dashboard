@@ -224,29 +224,38 @@
     @apply border-border outline-ring/50;
   }
 
+  /* ==========================================
+     自适应缩放策略 (基于 CSS 视口宽度)
+
+     CSS 像素 = 物理像素 / 系统缩放比例
+     - MacBook 16" (3456×2234 @ 200%): ~1728 CSS 像素
+     - 5K 27" (5120×2880 @ 200%): ~2560 CSS 像素
+     - 1080p 外接 (1920×1080 @ 100%): ~1920 CSS 像素
+     ========================================== */
+
   html {
-    /* 默认缩放 - 标准 1080p 外接显示器 */
-    zoom: 1.5;
+    /* 默认: 不缩放 */
+    zoom: 1.0;
   }
 
-  /* Retina/HiDPI 显示器 (MacBook, 4K 显示器等) */
-  @media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
+  /* 小屏设备 (MacBook 14" 及以下, ~1512px 或更小) */
+  @media (max-width: 1600px) {
     html {
       zoom: 0.85;
     }
   }
 
-  /* 超宽屏/2K+ 分辨率 */
-  @media (min-width: 2560px) {
+  /* 中等屏幕 (1080p 外接显示器, MacBook 16") */
+  @media (min-width: 1601px) and (max-width: 2200px) {
     html {
-      zoom: 1.0;
+      zoom: 1.5;
     }
   }
 
-  /* 小屏设备 (平板/小笔记本) */
-  @media (max-width: 1366px) {
+  /* 大屏幕 (5K, 4K, 超宽屏 2560px+) */
+  @media (min-width: 2201px) {
     html {
-      zoom: 1.0;
+      zoom: 1.5;
     }
   }
 
