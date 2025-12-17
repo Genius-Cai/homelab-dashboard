@@ -225,8 +225,29 @@
   }
 
   html {
-    /* 默认 150% 缩放 */
+    /* 默认缩放 - 标准 1080p 外接显示器 */
     zoom: 1.5;
+  }
+
+  /* Retina/HiDPI 显示器 (MacBook, 4K 显示器等) */
+  @media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
+    html {
+      zoom: 0.85;
+    }
+  }
+
+  /* 超宽屏/2K+ 分辨率 */
+  @media (min-width: 2560px) {
+    html {
+      zoom: 1.0;
+    }
+  }
+
+  /* 小屏设备 (平板/小笔记本) */
+  @media (max-width: 1366px) {
+    html {
+      zoom: 1.0;
+    }
   }
 
   body {

@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning style={{ zoom: 1.5 }}>
+    <html lang="en" suppressHydrationWarning>
       <body className={`${jetbrainsMono.variable} font-mono antialiased`}>
         <QueryProvider>
           <ThemeProvider
