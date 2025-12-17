@@ -139,22 +139,28 @@ function ServiceItem({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 text-sm group cursor-pointer hover:bg-accent/50 p-1 -mx-1 transition-colors"
+      className="flex items-center gap-2 text-sm group cursor-pointer hover:bg-accent/50 py-1 px-1 -mx-1 transition-colors"
       title={`${isLocalNetwork ? "Local" : "External"}: ${url}`}
     >
-      <IconComponent
-        size={14}
-        className="text-muted-foreground group-hover:text-foreground transition-colors"
-      />
-      {status === "online" ? (
-        <PixelStatusOnline size={8} />
-      ) : (
-        <PixelStatusOffline size={8} />
-      )}
-      <span className="flex-1 group-hover:underline">{name}</span>
+      {/* Icon container - fixed width for alignment */}
+      <span className="w-4 h-4 flex items-center justify-center shrink-0">
+        <IconComponent
+          size={16}
+          className="text-muted-foreground group-hover:text-foreground transition-colors"
+        />
+      </span>
+      {/* Status dot - fixed width */}
+      <span className="w-2 h-2 flex items-center justify-center shrink-0">
+        {status === "online" ? (
+          <PixelStatusOnline size={8} />
+        ) : (
+          <PixelStatusOffline size={8} />
+        )}
+      </span>
+      <span className="flex-1 group-hover:underline truncate">{name}</span>
       <Badge
         variant={status === "online" ? "success" : "destructive"}
-        className="text-[10px] px-1.5 py-0 w-[52px] text-center justify-center"
+        className="text-[10px] px-1.5 py-0 w-[52px] text-center justify-center shrink-0"
       >
         {status.toUpperCase()}
       </Badge>
