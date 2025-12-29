@@ -3,13 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ASCIIProgress } from "@/components/ui/ascii-progress";
-import {
-  PixelStatusOnline,
-  PixelHome,
-  PixelCoffee,
-  PixelPark,
-  PixelPin,
-} from "@/components/ui/pixel-icons";
+import { PixelStatusOnline } from "@/components/ui/pixel-icons";
 import { QuickAccess } from "@/components/widgets/quick-access";
 import { Clock } from "@/components/widgets/clock";
 import { CalendarWidget } from "@/components/widgets/calendar-widget";
@@ -18,6 +12,8 @@ import { SystemOverview } from "@/components/widgets/system-overview";
 import { ThemeToggle } from "@/components/widgets/theme-toggle";
 import { MarketsCard } from "@/components/widgets/markets-card";
 import { TodoList } from "@/components/widgets/todo-list";
+import { RSSFeed } from "@/components/widgets/rss-feed";
+import { JourneyCard } from "@/components/widgets/journey-card";
 
 export default function Dashboard() {
   return (
@@ -71,29 +67,8 @@ export default function Dashboard() {
           <QuickAccess />
         </div>
 
-        {/* Right: RSS Sticky Note - Brutalist Style */}
-        <div className="p-4 bg-primary/5 border-l-4 border-primary relative">
-          {/* Corner fold effect */}
-          <div className="absolute top-0 right-0 w-6 h-6 bg-primary/10"
-               style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
-
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-black tracking-wider text-primary">📡 RSS FEED</span>
-            <span className="text-[10px] text-muted-foreground font-mono">[starred]</span>
-          </div>
-
-          <div className="space-y-1.5">
-            <NoteItem title="Next.js 16 正式发布" isNew />
-            <NoteItem title="Claude 4.5 重大更新" isNew />
-            <NoteItem title="Docker 容器最佳实践" />
-            <NoteItem title="Homelab 完整搭建指南" />
-          </div>
-
-          <div className="mt-3 pt-2 border-t border-border/30 flex justify-between text-[10px] font-mono text-muted-foreground">
-            <span>[6 items · 2 new]</span>
-            <span className="text-primary cursor-pointer hover:underline">view all →</span>
-          </div>
-        </div>
+        {/* Right: RSS Feed - Live from Blinko */}
+        <RSSFeed />
       </div>
 
       {/* Bento Grid */}
@@ -104,31 +79,8 @@ export default function Dashboard() {
         {/* System Overview Card - Large */}
         <SystemOverview />
 
-        {/* Today's Journey Card */}
-        <Card className="lg:row-span-2 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-sm transition-all duration-100">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PixelPin size={16} />
-              TODAY&apos;S JOURNEY
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="relative pl-6 space-y-6">
-              {/* Vertical timeline line */}
-              <div className="absolute left-[7px] top-2 bottom-8 w-0.5 border-l-2 border-dashed border-border" />
-
-              <JourneyItem time="09:23" label="HOME" icon={<PixelHome size={16} />} current={false} />
-              <JourneyItem time="10:15" label="CAFE" icon={<PixelCoffee size={16} />} current={false} />
-              <JourneyItem time="12:20" label="PARK" icon={<PixelPark size={16} />} current={false} />
-              <JourneyItem time="13:25" label="NOW" icon={<PixelPin size={16} />} current={true} />
-            </div>
-
-            <div className="mt-6 pt-3 border-t border-border/50 flex gap-4 text-xs text-muted-foreground font-mono">
-              <span>[9.2km traveled]</span>
-              <span>[3 stops]</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Today's Journey Card - Live from Dawarich */}
+        <JourneyCard />
 
         {/* Markets Card - Real-time data */}
         <MarketsCard />
@@ -210,34 +162,6 @@ export default function Dashboard() {
 
 // Sub-components
 
-function JourneyItem({
-  time,
-  label,
-  icon,
-  current
-}: {
-  time: string;
-  label: string;
-  icon: React.ReactNode;
-  current: boolean;
-}) {
-  return (
-    <div className={`flex items-center gap-3 ${current ? "font-bold" : ""}`}>
-      <div className={`relative z-10 p-1 border-2 border-border bg-card ${current ? "animate-pulse" : ""}`}>
-        {icon}
-      </div>
-      <div className="flex-1">
-        <span className="text-xs text-muted-foreground font-mono">{time}</span>
-        <p className={current ? "text-primary" : ""}>{label}</p>
-      </div>
-      {current && (
-        <Badge variant="default" className="text-[10px]">NOW</Badge>
-      )}
-    </div>
-  );
-}
-
-
 function CalendarItem({
   time,
   event,
@@ -256,19 +180,4 @@ function CalendarItem({
   );
 }
 
-function NoteItem({ title, isNew }: { title: string; isNew?: boolean }) {
-  return (
-    <div className="flex items-center gap-2 text-xs cursor-pointer hover:bg-primary/10 p-1 -mx-1 transition-colors">
-      <span className={isNew ? "text-primary" : "text-muted-foreground/50"}>
-        {isNew ? "●" : "○"}
-      </span>
-      <span className="truncate flex-1">{title}</span>
-      {isNew && (
-        <span className="text-[9px] px-1 bg-primary text-primary-foreground font-bold shrink-0">
-          NEW
-        </span>
-      )}
-    </div>
-  );
-}
 

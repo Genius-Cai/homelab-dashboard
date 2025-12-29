@@ -460,3 +460,111 @@ export function PixelCalendar({ className, size = 16 }: PixelIconProps) {
   ];
   return <PixelGrid pixels={pixels} size={size} className={className} />;
 }
+
+// Claude AI Logo (Anthropic spark shape) - Coral/Orange
+export function PixelClaude({ className, size = 16 }: PixelIconProps) {
+  const pixels = [
+    "...##...",
+    "...##...",
+    "#..##..#",
+    "########",
+    "########",
+    "#..##..#",
+    "...##...",
+    "...##...",
+  ];
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 8 8"
+      className={cn("pixel-icon", className)}
+      style={{ imageRendering: "pixelated" }}
+    >
+      {pixels.map((row, y) =>
+        row.split("").map((pixel, x) => {
+          if (pixel === "." || pixel === " ") return null;
+          return (
+            <rect
+              key={`${x}-${y}`}
+              x={x}
+              y={y}
+              width={1}
+              height={1}
+              fill="#D97757"
+            />
+          );
+        })
+      )}
+    </svg>
+  );
+}
+
+// ChatGPT Logo (OpenAI) - Green
+export function PixelChatGPT({ className, size = 16 }: PixelIconProps) {
+  const pixels = [
+    "..####..",
+    ".#....#.",
+    "#..##..#",
+    "#.#..#.#",
+    "#.#..#.#",
+    "#..##..#",
+    ".#....#.",
+    "..####..",
+  ];
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 8 8"
+      className={cn("pixel-icon", className)}
+      style={{ imageRendering: "pixelated" }}
+    >
+      {pixels.map((row, y) =>
+        row.split("").map((pixel, x) => {
+          if (pixel === "." || pixel === " ") return null;
+          return (
+            <rect
+              key={`${x}-${y}`}
+              x={x}
+              y={y}
+              width={1}
+              height={1}
+              fill="#10A37F"
+            />
+          );
+        })
+      )}
+    </svg>
+  );
+}
+
+// GitHub Logo (Octocat silhouette)
+export function PixelGitHub({ className, size = 16 }: PixelIconProps) {
+  const pixels = [
+    "..####..",
+    ".######.",
+    "##.##.##",
+    "########",
+    "########",
+    ".##..##.",
+    ".#.##.#.",
+    "..#..#..",
+  ];
+  return <PixelGrid pixels={pixels} size={size} className={className} />;
+}
+
+// Rocket Icon
+export function PixelRocket({ className, size = 16 }: PixelIconProps) {
+  const pixels = [
+    "...##...",
+    "..####..",
+    ".######.",
+    ".##RR##.",
+    ".##RR##.",
+    "##.##.##",
+    "#..##..#",
+    "...##...",
+  ];
+  return <PixelGrid pixels={pixels} size={size} className={className} />;
+}

@@ -112,9 +112,36 @@ export async function GET() {
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
 
+    // Auto-cleanup: Delete completed todos older than 24 hours
+    const now = Date.now();
+    const CLEANUP_THRESHOLD = 24 * 60 * 60 * 1000; // 24 hours
+    const expiredTodos = notes.filter((note) => {
+      const isDone = note.content.startsWith("✓") || note.content.startsWith("[x]") || note.content.startsWith("[X]");
+      const age = now - new Date(note.updatedAt).getTime();
+      return isDone && age > CLEANUP_THRESHOLD;
+    });
+
+    if (expiredTodos.length > 0) {
+      // Async delete - don't block the response
+      fetch(`${BLINKO_URL}/api/v1/note/batch-delete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${BLINKO_API_TOKEN}`,
+        },
+        body: JSON.stringify({
+          ids: expiredTodos.map((t) => t.id),
+        }),
+      }).then(() => {
+        console.log(`Auto-cleaned ${expiredTodos.length} completed todos older than 24h`);
+      }).catch((err) => {
+        console.error("Auto-cleanup failed:", err);
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      data: todos,
+      data: todos.filter((t) => !expiredTodos.some((e) => e.id === t.id)), // Exclude expired from response
       source: "blinko",
       timestamp: new Date().toISOString(),
     });

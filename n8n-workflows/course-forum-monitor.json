@@ -1,0 +1,117 @@
+{
+  "name": "Course Forum Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 30 }]
+        }
+      },
+      "name": "Every 30 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.COMP2521_FORUM_RSS }}",
+        "options": {}
+      },
+      "name": "Fetch Forum RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "new-post",
+              "leftValue": "={{ $json.isoDate }}",
+              "rightValue": "={{ $now.minus({ hours: 1 }).toISO() }}",
+              "operator": { "type": "dateTime", "operation": "after" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Filter New Posts",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a course forum post classifier. Analyze posts and determine if they are IMPORTANT for students.\n\nIMPORTANT posts include:\n- Exam announcements or changes\n- Assignment releases or deadline changes\n- Grade releases\n- Staff announcements\n- Course logistics changes\n- Pinned/featured topics\n\nNOT IMPORTANT:\n- Student questions\n- General discussion\n- Social posts\n\nRespond with JSON: {\"important\": true/false, \"reason\": \"brief reason\", \"priority\": \"high/medium/low\"}"
+            },
+            {
+              "role": "user",
+              "content": "Post Title: {{ $json.title }}\nCategory: {{ $json.categories }}\nContent Preview: {{ $json.contentSnippet }}\nAuthor: {{ $json.creator }}"
+            }
+          ]
+        },
+        "options": { "temperature": 0.1 }
+      },
+      "name": "Classify Importance",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = JSON.parse($input.first().json.message.content);\nreturn [{\n  json: {\n    ...items[0].json,\n    classification: response\n  }\n}];"
+      },
+      "name": "Parse Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.classification.important }}", "value2": true }]
+        }
+      },
+      "name": "Is Important?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.BLINKO_URL }}/api/v1/note/upsert",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"🎓 [COMP2521] {{ $json.title }}\\n{{ $json.link }}\\n\\n{{ $json.classification.reason }} #course\",\n  \"type\": 0\n}"
+      },
+      "name": "Save to Blinko",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200],
+      "credentials": { "httpHeaderAuth": { "name": "Blinko API Token" } }
+    }
+  ],
+  "connections": {
+    "Every 30 Minutes": { "main": [[{ "node": "Fetch Forum RSS", "type": "main", "index": 0 }]] },
+    "Fetch Forum RSS": { "main": [[{ "node": "Filter New Posts", "type": "main", "index": 0 }]] },
+    "Filter New Posts": { "main": [[{ "node": "Classify Importance", "type": "main", "index": 0 }]] },
+    "Classify Importance": { "main": [[{ "node": "Parse Classification", "type": "main", "index": 0 }]] },
+    "Parse Classification": { "main": [[{ "node": "Is Important?", "type": "main", "index": 0 }]] },
+    "Is Important?": { "main": [[{ "node": "Save to Blinko", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "meta": { "instanceId": "homelab" },
+  "tags": [{ "name": "course-monitor" }]
+}
