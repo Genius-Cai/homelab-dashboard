@@ -20,6 +20,7 @@ export interface RSSItem {
   url: string;
   source?: string;
   summary?: string;
+  score?: number; // AI importance rating 1-10
   isNew: boolean; // within 24h
   isStarred: boolean; // has #starred tag
   publishedAt: string;
@@ -77,12 +78,17 @@ function parseRSSItem(note: BlinkoNote): RSSItem {
   // Check if starred
   const isStarred = content.includes("#starred") || content.includes("#star") || note.isTop;
 
+  // Extract score from content (e.g., "Score: 7/10")
+  const scoreMatch = content.match(/Score:\s*(\d+)\/10/i);
+  const score = scoreMatch ? parseInt(scoreMatch[1], 10) : undefined;
+
   return {
     id: note.id,
     title,
     url,
     source,
     summary: summary || undefined,
+    score,
     isNew,
     isStarred,
     publishedAt: note.createdAt,
@@ -160,9 +166,13 @@ export async function GET(request: NextRequest) {
 
     const rssItems = rssNotes.map(parseRSSItem);
 
-    // Sort: starred first, then by date (newest first)
+    // Sort: starred first, then by score (highest first), then by date (newest first)
     rssItems.sort((a, b) => {
       if (a.isStarred !== b.isStarred) return a.isStarred ? -1 : 1;
+      // Sort by score descending (highest importance first)
+      const scoreA = a.score ?? 0;
+      const scoreB = b.score ?? 0;
+      if (scoreA !== scoreB) return scoreB - scoreA;
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
 
