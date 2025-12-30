@@ -49,7 +49,7 @@ function NoteItem({ item, isCourse, showScore }: { item: RSSItem; isCourse?: boo
         {item.isNew ? "●" : "○"}
       </span>
       {showScore && item.score && (
-        <span className="text-[9px] font-mono text-muted-foreground shrink-0">{item.score}</span>
+        <span className="text-[9px] font-mono text-muted-foreground/70 shrink-0" title="AI importance score">{item.score}/10</span>
       )}
       <span className="truncate flex-1 group-hover:underline">{item.title}</span>
       {item.isNew && (
