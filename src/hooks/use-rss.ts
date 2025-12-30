@@ -8,6 +8,7 @@ export interface RSSItem {
   url: string;
   source?: string;
   summary?: string;
+  score?: number; // AI importance rating 1-10
   isNew: boolean;
   isStarred: boolean;
   publishedAt: string;
