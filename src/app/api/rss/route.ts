@@ -146,7 +146,8 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    const notes: BlinkoNote[] = data.items || data.data || [];
+    // Blinko API returns array directly, or {items: [...]} or {data: [...]}
+    const notes: BlinkoNote[] = Array.isArray(data) ? data : (data.items || data.data || []);
 
     // Filter notes that actually contain the searched tag
     let rssNotes = notes.filter((note) => note.content.includes(searchTag));
