@@ -219,7 +219,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const rssItems = rssNotes.map(parseRSSItem);
+    const rssItems = rssNotes.map(parseRSSItem)
+      // Filter out invalid items (no URL or both title and source missing)
+      .filter((item) => item.url && item.title !== "Untitled");
 
     // Sort: starred first, then by score (highest first), then by date (newest first)
     rssItems.sort((a, b) => {
