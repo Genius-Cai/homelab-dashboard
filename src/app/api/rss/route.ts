@@ -89,7 +89,32 @@ function parseRSSItem(note: BlinkoNote): RSSItem {
     }
   }
 
-  if (!title || title.length < 3) title = url ? source : "Untitled";
+  // If still no good title, use source-based fallback
+  if (!title || title.length < 3) {
+    if (source) {
+      // Map common domains to readable names
+      const sourceNames: Record<string, string> = {
+        "openai.com": "[OpenAI]",
+        "anthropic.com": "[Anthropic]",
+        "blog.anthropic.com": "[Anthropic]",
+        "github.com": "[GitHub]",
+        "twitter.com": "[Twitter]",
+        "x.com": "[X]",
+        "nitter.home.local": "[Twitter]",
+        "news.ycombinator.com": "[HN]",
+        "reddit.com": "[Reddit]",
+        "arxiv.org": "[arXiv]",
+        "huggingface.co": "[HuggingFace]",
+        "deepmind.com": "[DeepMind]",
+        "ai.google": "[Google AI]",
+        "openai.github.io": "[OpenAI]",
+      };
+      const prefix = sourceNames[source] || `[${source.split(".")[0]}]`;
+      title = `${prefix} New post`;
+    } else {
+      title = "Untitled";
+    }
+  }
 
   // Summary: remaining content after first line
   const lines = content.split("\n").filter((l) => l.trim());
