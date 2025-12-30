@@ -50,17 +50,34 @@ function parseRSSItem(note: BlinkoNote): RSSItem {
     }
   }
 
-  // Clean content: remove tags, URLs, emoji prefixes
+  // Clean content: extract meaningful title
   let title = content
     .replace(/#\w+/g, "") // remove all hashtags
     .replace(/(https?:\/\/[^\s]+)/g, "") // remove URLs
     .split("\n")[0] // take first line
-    .replace(/^[📰📡🔗💡🇨🇳\[\]]/g, "") // remove emoji prefix and brackets
+    // Remove all emoji characters (including 📡📰🔗💡📢🇨🇳 etc.)
+    .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, "")
     .replace(/^(EN|CN|Score):\s*/gi, "") // remove EN:/CN:/Score: labels
     .replace(/^\d+\/10\s*/, "") // remove score like "8/10"
+    .replace(/^RT\s+by\s+@\w+:\s*/i, "") // remove "RT by @username:"
+    .replace(/^\[\w+\]\s*/, "") // remove [category] prefix
+    .replace(/^[:\s\[\]]+/, "") // remove leading punctuation
     .trim();
 
-  if (!title) title = url ? source : "Untitled";
+  // If title is too short or just "True/False", try to get from summary
+  if (!title || title.length < 5 || /^(true|false)$/i.test(title)) {
+    // Try second line as title
+    const lines = content.split("\n").filter((l) => l.trim() && !l.startsWith("http") && !l.startsWith("#"));
+    if (lines.length > 1) {
+      title = lines[1]
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, "")
+        .replace(/^(EN|CN):\s*/gi, "")
+        .trim()
+        .substring(0, 100);
+    }
+  }
+
+  if (!title || title.length < 3) title = url ? source : "Untitled";
 
   // Summary: remaining content after first line
   const lines = content.split("\n").filter((l) => l.trim());
