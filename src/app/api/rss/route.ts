@@ -28,15 +28,15 @@ export interface RSSItem {
 // Parse RSS item from Blinko note with #rss tag
 function parseRSSItem(note: BlinkoNote): RSSItem {
   const content = note.content;
-  const lines = content.split("\n").filter((l) => l.trim());
-
-  // Extract title (first line, remove emoji prefix if any)
-  let title = lines[0] || "Untitled";
-  title = title.replace(/^[📰📡🔗]\s*/, "").trim();
 
   // Extract URL (look for http/https)
   const urlMatch = content.match(/(https?:\/\/[^\s]+)/);
-  const url = urlMatch ? urlMatch[1] : "";
+  let url = urlMatch ? urlMatch[1] : "";
+
+  // Fix Nitter URLs: add port 8888 if missing
+  if (url.includes("nitter.home.local") && !url.includes(":8888")) {
+    url = url.replace("nitter.home.local", "nitter.home.local:8888");
+  }
 
   // Extract source from URL domain
   let source = "";
@@ -49,7 +49,20 @@ function parseRSSItem(note: BlinkoNote): RSSItem {
     }
   }
 
-  // Extract summary (lines between title and URL, excluding tags)
+  // Clean content: remove tags, URLs, emoji prefixes
+  let title = content
+    .replace(/#\w+/g, "") // remove all hashtags
+    .replace(/(https?:\/\/[^\s]+)/g, "") // remove URLs
+    .split("\n")[0] // take first line
+    .replace(/^[📰📡🔗💡🇨🇳\[\]]/g, "") // remove emoji prefix and brackets
+    .replace(/^(EN|CN|Score):\s*/gi, "") // remove EN:/CN:/Score: labels
+    .replace(/^\d+\/10\s*/, "") // remove score like "8/10"
+    .trim();
+
+  if (!title) title = url ? source : "Untitled";
+
+  // Summary: remaining content after first line
+  const lines = content.split("\n").filter((l) => l.trim());
   const summary = lines
     .slice(1)
     .filter((l) => !l.startsWith("http") && !l.startsWith("#"))
@@ -127,7 +140,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    const notes: BlinkoNote[] = data.data || data || [];
+    const notes: BlinkoNote[] = data.items || data.data || [];
 
     // Filter notes that actually contain the searched tag
     let rssNotes = notes.filter((note) => note.content.includes(searchTag));

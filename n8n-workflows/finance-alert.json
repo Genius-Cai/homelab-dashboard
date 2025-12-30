@@ -1,0 +1,160 @@
+{
+  "name": "Finance Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 1 }]
+        }
+      },
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bloomberg.com/markets/news.rss",
+        "options": {}
+      },
+      "name": "Bloomberg Markets",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.reuters.com/reuters/businessNews",
+        "options": {}
+      },
+      "name": "Reuters Business",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.a]bbased.com/wsj/xml/rss/3_7085.xml",
+        "options": {}
+      },
+      "name": "WSJ Markets",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 600]
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/wallstreetbets/top/.rss?t=day",
+        "options": {}
+      },
+      "name": "WSB Top",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 800]
+    },
+    {
+      "parameters": { "mode": "combine", "mergeByFields": { "values": [] }, "options": {} },
+      "name": "Merge Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [700, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "recent",
+              "leftValue": "={{ $json.isoDate || $json.pubDate }}",
+              "rightValue": "={{ $now.minus({ hours: 2 }).toISO() }}",
+              "operator": { "type": "dateTime", "operation": "after" }
+            }
+          ]
+        }
+      },
+      "name": "Filter Last 2 Hours",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [920, 500]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a finance news analyst. Rate news urgency 1-10.\n\nURGENT (8-10):\n- Fed rate decisions, policy shifts\n- Major earnings surprises (FAANG, NVDA)\n- Market crashes/rallies >3%\n- Geopolitical events affecting markets\n- Breaking M&A announcements\n- Crypto major moves (BTC >5% daily)\n\nIMPORTANT (5-7):\n- Sector rotation signals\n- Notable analyst upgrades/downgrades\n- Economic data releases\n- Company guidance changes\n\nNORMAL (1-4):\n- Routine earnings\n- Opinion pieces\n- Historical analysis\n\nRespond JSON: {\"urgency\": 1-10, \"category\": \"fed|earnings|macro|crypto|geopolitical\", \"tickers\": [\"AAPL\"], \"headline\": \"5 words max\"}"
+            },
+            {
+              "role": "user",
+              "content": "Title: {{ $json.title }}\nSource: {{ $json.link }}\nContent: {{ $json.contentSnippet || $json.content | truncate(500) }}"
+            }
+          ]
+        },
+        "options": { "temperature": 0.1 }
+      },
+      "name": "Rate Urgency",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [1140, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = JSON.parse($input.first().json.message.content);\nconst item = $input.first().json;\nreturn [{\n  json: {\n    title: item.title,\n    link: item.link,\n    source: new URL(item.link).hostname,\n    ...response\n  }\n}];"
+      },
+      "name": "Parse Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.urgency }}", "value2": 7, "operation": "gte" }]
+        }
+      },
+      "name": "Urgency >= 7?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1580, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.BLINKO_URL }}/api/v1/note/upsert",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"💰 {{ $json.headline }}\\n{{ $json.link }}\\n\\n{{ $json.title }}\\n[{{ $json.category }}] {{ $json.tickers.join(' ') }} Urgency: {{ $json.urgency }}/10 #rss #finance\",\n  \"type\": 0\n}"
+      },
+      "name": "Save to Blinko",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, 400],
+      "credentials": { "httpHeaderAuth": { "name": "Blinko API Token" } }
+    }
+  ],
+  "connections": {
+    "Every Hour": { "main": [[
+      { "node": "Bloomberg Markets", "type": "main", "index": 0 },
+      { "node": "Reuters Business", "type": "main", "index": 0 },
+      { "node": "WSJ Markets", "type": "main", "index": 0 },
+      { "node": "WSB Top", "type": "main", "index": 0 }
+    ]] },
+    "Bloomberg Markets": { "main": [[{ "node": "Merge Sources", "type": "main", "index": 0 }]] },
+    "Reuters Business": { "main": [[{ "node": "Merge Sources", "type": "main", "index": 0 }]] },
+    "WSJ Markets": { "main": [[{ "node": "Merge Sources", "type": "main", "index": 0 }]] },
+    "WSB Top": { "main": [[{ "node": "Merge Sources", "type": "main", "index": 0 }]] },
+    "Merge Sources": { "main": [[{ "node": "Filter Last 2 Hours", "type": "main", "index": 0 }]] },
+    "Filter Last 2 Hours": { "main": [[{ "node": "Rate Urgency", "type": "main", "index": 0 }]] },
+    "Rate Urgency": { "main": [[{ "node": "Parse Result", "type": "main", "index": 0 }]] },
+    "Parse Result": { "main": [[{ "node": "Urgency >= 7?", "type": "main", "index": 0 }]] },
+    "Urgency >= 7?": { "main": [[{ "node": "Save to Blinko", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "homelab" },
+  "tags": [{ "name": "finance" }]
+}

@@ -1,0 +1,240 @@
+{
+  "name": "AI News Aggregator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 2 }]
+        }
+      },
+      "name": "Every 2 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://hnrss.org/newest?q=AI+OR+LLM+OR+GPT+OR+Claude+OR+Anthropic+OR+OpenAI&points=50",
+        "options": {}
+      },
+      "name": "HN AI Posts (50+ points)",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 100]
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/MachineLearning/top/.rss?t=day",
+        "options": {}
+      },
+      "name": "Reddit ML Top",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 250]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.google/technology/ai/rss/",
+        "options": {}
+      },
+      "name": "Google AI Blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://openai.com/blog/rss.xml",
+        "options": {}
+      },
+      "name": "OpenAI Blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 550]
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.transistor.fm/invest-like-the-best",
+        "options": {}
+      },
+      "name": "Invest Like the Best Podcast",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 700]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.50.80:8888/GavinSBaker/rss",
+        "options": {}
+      },
+      "name": "Twitter: Gavin Baker",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 850]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.50.80:8888/sama/rss",
+        "options": {}
+      },
+      "name": "Twitter: Sam Altman",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 1000]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.50.80:8888/karpathy/rss",
+        "options": {}
+      },
+      "name": "Twitter: Andrej Karpathy",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 1150]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.50.80:8888/ylecun/rss",
+        "options": {}
+      },
+      "name": "Twitter: Yann LeCun",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 1300]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.50.80:8888/DrJimFan/rss",
+        "options": {}
+      },
+      "name": "Twitter: Jim Fan",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 1450]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.50.80:8888/elonmusk/rss",
+        "options": {}
+      },
+      "name": "Twitter: Elon Musk",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [460, 1600]
+    },
+    {
+      "parameters": { "mode": "combine", "mergeByFields": { "values": [] }, "options": {} },
+      "name": "Merge All Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [700, 700]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "recent",
+              "leftValue": "={{ $json.isoDate || $json.pubDate }}",
+              "rightValue": "={{ $now.minus({ hours: 4 }).toISO() }}",
+              "operator": { "type": "dateTime", "operation": "after" }
+            }
+          ]
+        }
+      },
+      "name": "Filter Last 4 Hours",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [920, 700]
+    },
+    {
+      "parameters": {
+        "modelId": { "__rl": true, "mode": "list", "value": "claude-3-5-haiku-latest" },
+        "messages": {
+          "values": [
+            {
+              "content": "=Rate this article for a tech investor (1-10).\n\nHIGH (8-10): Major model releases, scaling breakthroughs, infra economics, top VC theses, regulation, China-US competition\nMEDIUM (5-7): New techniques, company shifts, notable demos\nLOW (1-4): Tutorials, minor updates, opinion without data\n\nTitle: {{ $json.title }}\nSource: {{ $json.link }}\nContent: {{ ($json.contentSnippet || $json.content || '').substring(0, 500) }}\n\nRespond ONLY with JSON: {\"score\": N, \"category\": \"infra|model|investment|regulation|competition\", \"summary\": \"1 sentence\"}"
+            }
+          ]
+        },
+        "options": { "maxTokensToSample": 150 }
+      },
+      "name": "Rate Importance",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [1140, 700],
+      "credentials": { "anthropicApi": { "id": "S5duwwLHvjKyJQHq", "name": "Anthropic Claude" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.text || $input.first().json.message?.content || '{}';\nconst match = text.match(/\\{[\\s\\S]*\\}/);\nconst response = match ? JSON.parse(match[0]) : { score: 5, category: 'unknown', summary: 'Parse error' };\nconst item = $input.first().json;\nreturn [{ json: { title: item.title, link: item.link, source: item.link ? new URL(item.link).hostname : 'unknown', ...response } }];"
+      },
+      "name": "Parse Rating",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 700]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.score }}", "value2": 7, "operation": "gte" }]
+        }
+      },
+      "name": "Score >= 7?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1580, 700]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.50.80:1111/api/v1/note/upsert",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"📡 {{ $json.title }}\\n{{ $json.link }}\\n\\n💡 {{ $json.summary }}\\n[{{ $json.category }}] Score: {{ $json.score }}/10 #rss\",\n  \"type\": 0\n}"
+      },
+      "name": "Save to Blinko",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, 600],
+      "credentials": { "httpHeaderAuth": { "name": "Blinko API Token" } }
+    }
+  ],
+  "connections": {
+    "Every 2 Hours": { "main": [[
+      { "node": "HN AI Posts (50+ points)", "type": "main", "index": 0 },
+      { "node": "Reddit ML Top", "type": "main", "index": 0 },
+      { "node": "Google AI Blog", "type": "main", "index": 0 },
+      { "node": "OpenAI Blog", "type": "main", "index": 0 },
+      { "node": "Invest Like the Best Podcast", "type": "main", "index": 0 },
+      { "node": "Twitter: Gavin Baker", "type": "main", "index": 0 },
+      { "node": "Twitter: Sam Altman", "type": "main", "index": 0 },
+      { "node": "Twitter: Andrej Karpathy", "type": "main", "index": 0 },
+      { "node": "Twitter: Yann LeCun", "type": "main", "index": 0 },
+      { "node": "Twitter: Jim Fan", "type": "main", "index": 0 },
+      { "node": "Twitter: Elon Musk", "type": "main", "index": 0 }
+    ]] },
+    "HN AI Posts (50+ points)": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Reddit ML Top": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Google AI Blog": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "OpenAI Blog": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Invest Like the Best Podcast": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Twitter: Gavin Baker": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Twitter: Sam Altman": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Twitter: Andrej Karpathy": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Twitter: Yann LeCun": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Twitter: Jim Fan": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Twitter: Elon Musk": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Merge All Sources": { "main": [[{ "node": "Filter Last 4 Hours", "type": "main", "index": 0 }]] },
+    "Filter Last 4 Hours": { "main": [[{ "node": "Rate Importance", "type": "main", "index": 0 }]] },
+    "Rate Importance": { "main": [[{ "node": "Parse Rating", "type": "main", "index": 0 }]] },
+    "Parse Rating": { "main": [[{ "node": "Score >= 7?", "type": "main", "index": 0 }]] },
+    "Score >= 7?": { "main": [[{ "node": "Save to Blinko", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "homelab" },
+  "tags": [{ "name": "ai-news" }]
+}
