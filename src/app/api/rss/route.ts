@@ -50,30 +50,42 @@ function parseRSSItem(note: BlinkoNote): RSSItem {
     }
   }
 
-  // Clean content: extract meaningful title
-  let title = content
-    .replace(/#\w+/g, "") // remove all hashtags
+  // Helper to remove emojis
+  const removeEmoji = (str: string) => str.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, "");
+
+  // Helper to clean title
+  const cleanTitle = (str: string) => str
+    .replace(/#\w+/g, "") // remove hashtags
     .replace(/(https?:\/\/[^\s]+)/g, "") // remove URLs
-    .split("\n")[0] // take first line
-    // Remove all emoji characters (including 📡📰🔗💡📢🇨🇳 etc.)
-    .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, "")
-    .replace(/^(EN|CN|Score):\s*/gi, "") // remove EN:/CN:/Score: labels
-    .replace(/^\d+\/10\s*/, "") // remove score like "8/10"
     .replace(/^RT\s+by\s+@\w+:\s*/i, "") // remove "RT by @username:"
-    .replace(/^\[\w+\]\s*/, "") // remove [category] prefix
+    .replace(/^\[\w+\]\s*/, "") // remove [category]
+    .replace(/^(EN|CN|Score):\s*/gi, "") // remove labels
+    .replace(/^\d+\/10\s*/, "") // remove score
     .replace(/^[:\s\[\]]+/, "") // remove leading punctuation
     .trim();
 
-  // If title is too short or just "True/False", try to get from summary
-  if (!title || title.length < 5 || /^(true|false)$/i.test(title)) {
-    // Try second line as title
-    const lines = content.split("\n").filter((l) => l.trim() && !l.startsWith("http") && !l.startsWith("#"));
-    if (lines.length > 1) {
-      title = lines[1]
-        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, "")
-        .replace(/^(EN|CN):\s*/gi, "")
-        .trim()
-        .substring(0, 100);
+  // Extract first meaningful line
+  const firstLine = removeEmoji(content.split("\n")[0]).trim();
+  let title = cleanTitle(firstLine);
+
+  // If title is too short or just "True/False", extract from EN summary
+  if (!title || title.length < 10 || /^(true|false)$/i.test(title)) {
+    // Find EN summary line
+    const enMatch = content.match(/💡\s*EN:\s*([^\n]+)/);
+    if (enMatch) {
+      title = cleanTitle(removeEmoji(enMatch[1])).substring(0, 120);
+    }
+  }
+
+  // If still no good title, try any non-URL line
+  if (!title || title.length < 5) {
+    const lines = content.split("\n").filter((l) => l.trim() && !l.startsWith("http") && !l.includes("#rss"));
+    for (const line of lines) {
+      const cleaned = cleanTitle(removeEmoji(line));
+      if (cleaned.length > 10) {
+        title = cleaned.substring(0, 120);
+        break;
+      }
     }
   }
 
