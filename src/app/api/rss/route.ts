@@ -223,8 +223,18 @@ export async function GET(request: NextRequest) {
       // Filter out invalid items (no URL or both title and source missing)
       .filter((item) => item.url && item.title !== "Untitled");
 
+    // Deduplicate by URL - keep highest score version
+    const urlMap = new Map<string, RSSItem>();
+    for (const item of rssItems) {
+      const existing = urlMap.get(item.url);
+      if (!existing || (item.score ?? 0) > (existing.score ?? 0)) {
+        urlMap.set(item.url, item);
+      }
+    }
+    const dedupedItems = Array.from(urlMap.values());
+
     // Sort: starred first, then by score (highest first), then by date (newest first)
-    rssItems.sort((a, b) => {
+    dedupedItems.sort((a, b) => {
       if (a.isStarred !== b.isStarred) return a.isStarred ? -1 : 1;
       // Sort by score descending (highest importance first)
       const scoreA = a.score ?? 0;
@@ -234,14 +244,14 @@ export async function GET(request: NextRequest) {
     });
 
     // Stats
-    const newCount = rssItems.filter((item) => item.isNew).length;
-    const starredCount = rssItems.filter((item) => item.isStarred).length;
+    const newCount = dedupedItems.filter((item) => item.isNew).length;
+    const starredCount = dedupedItems.filter((item) => item.isStarred).length;
 
     return NextResponse.json({
       success: true,
-      data: rssItems,
+      data: dedupedItems,
       stats: {
-        total: rssItems.length,
+        total: dedupedItems.length,
         new: newCount,
         starred: starredCount,
       },
